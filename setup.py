@@ -5,7 +5,7 @@ setup(
   version='0.1',
   description='Miscellaneous Data Science functions',
   url='https://github.com/gfleetwood/handyman',
-  author='Gordon Fleetwood',
+  author='gfleetwood',
   author_email='gfleetwood@protonmail.com',
   license='MIT',
   packages=['handyman'],
