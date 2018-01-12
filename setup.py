@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
   name='handyman',
-  version='0.1',
+  version='0.2',
   description='Miscellaneous Data Science functions',
   url='https://github.com/gfleetwood/handyman',
   author='gfleetwood',
