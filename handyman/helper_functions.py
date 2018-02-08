@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 import plotnine as pn
+import sklearn.metrics as sk_mt
+from collections import OrderedDict
 
 #Data Summary
 
@@ -82,6 +84,141 @@ def get_num_corr_plot(df, num_cols):
                                    + pn.geom_text(pn.aes(label='value'), size=10))
 
     return(df_num_correlations_plot)
+
+def classification_metrics(y_actual, y_predicted):
+
+    '''
+    Role
+    ----
+    Takes a dataframe and a list of its numeric columns and returns a plot of the correlation between variables.
+
+    Parameters
+    ---------
+    * df: A pandas dataframe
+    * num_cols: A list of the numeric column names
+
+    Returns
+    -------
+    A list containing:
+
+    * df_num_correlations_plot: A heatmap plot of the correlation between the numeric variables.
+    '''
+    
+    metrics_dict = OrderedDict()
+    metrics_dict['model_name'] = model_name
+    metrics_dict['accuracy'] = sum(y_actual == y_prediction)/float(len(y_actual))
+    metrics_dict['roc_auc'] = sk_mt.roc_auc_score(y_actual, y_predicted)
+    metrics_dict['f1_score'] = sk_mt.f1_score(y_actual, y_predicted)
+
+    return(metrics_dict)
+    
+    
+def kaiser_harris_criterion(df):
+    cov_mat = np.cov(df.T)
+    e_vals, _ = np.linalg.eig(cov_mat)
+    return len(e_vals[e_vals > 1])
+    
+    
+#source: 
+#https://nbviewer.jupyter.org/github/rasbt/python-machine-learning-book/blob/master/code/bonus/scikit-model-to-json.ipynb
+
+import numpy as np
+import pandas as pd
+from collections import OrderedDict
+import json
+import codecs
+
+def serialize_model(model, descr):
+  
+    '''
+    Role
+    ----
+    T
+  
+    Parameters
+    ---------
+    * 
+    * 
+    * 
+  
+    Returns
+    -------
+    A
+    
+    * num_summary: 
+    * cat_summary:
+    '''
+    
+    attrs = [i for i in dir(model) if i.endswith('_') and not i.endswith('__')]   
+    attr_dict = {i: getattr(model, i) for i in attrs}    
+    for k in attr_dict:
+        if isinstance(attr_dict[k], np.ndarray):
+            attr_dict[k] = attr_dict[k].tolist()
+    attr_json = json.dumps(attr_dict)
+    
+    d = OrderedDict()
+    d['model_type'] = [str(model).split('(')[0]]
+    d['description'] = descr
+    d['params'] = [json.dumps(model.get_params())]
+    d['attrs'] = [attr_json]    
+        
+    df = pd.DataFrame(d)
+    return df
+
+def unserialize_model(df, model_revival, model_index = 0):
+  
+    '''
+    Role
+    ----
+    T
+  
+    Parameters
+    ---------
+    * 
+    * 
+    * 
+  
+    Returns
+    -------
+    A
+    
+    * num_summary: 
+    * cat_summary:
+    '''
+    
+    params = json.loads(df.params[model_index])
+    attributes = json.loads(df.attrs[model_index])
+    model_revival.set_params(**params)
+    for k in attributes:
+        if isinstance(attributes[k], list):
+            setattr(model_revival, k, np.array(attributes[k]))
+        else:
+            setattr(model_revival, k, attributes[k])
+            
+    return model_revival
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
