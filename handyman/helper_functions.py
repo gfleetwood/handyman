@@ -1,10 +1,10 @@
+import json
+import codecs
 import numpy as np
 import pandas as pd
 import plotnine as pn
 import sklearn.metrics as sk_mt
 from collections import OrderedDict
-
-#Data Summary
 
 def data_diagnostics(df, num_cols, cat_cols):
     '''
@@ -114,19 +114,28 @@ def classification_metrics(y_actual, y_predicted):
     
     
 def kaiser_harris_criterion(df):
+    '''
+    Role
+    ----
+    T
+  
+    Parameters
+    ---------
+    * 
+    * 
+    * 
+  
+    Returns
+    -------
+    A
+    
+    * num_summary: 
+    * cat_summary:
+    '''
     cov_mat = np.cov(df.T)
     e_vals, _ = np.linalg.eig(cov_mat)
     return len(e_vals[e_vals > 1])
     
-    
-#source: 
-#https://nbviewer.jupyter.org/github/rasbt/python-machine-learning-book/blob/master/code/bonus/scikit-model-to-json.ipynb
-
-import numpy as np
-import pandas as pd
-from collections import OrderedDict
-import json
-import codecs
 
 def serialize_model(model, descr):
   
@@ -197,6 +206,10 @@ def unserialize_model(df, model_revival, model_index = 0):
             
     return model_revival
 
+def rf_feature_importance(df, model_rf):
+    fi = list(zip(df.columns, model_rf.feature_importances_))
+    fi_sorted = sorted(fi, key = lambda x: -x[1])
+    return fi_sorted
 
 
 
