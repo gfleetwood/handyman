@@ -211,7 +211,19 @@ def rf_feature_importance(df, model_rf):
     fi_sorted = sorted(fi, key = lambda x: -x[1])
     return fi_sorted
 
-
+#arbitrary list flattening: https://medium.com/@oliviercruchant/python-flatten-arbitrarily-nested-list-beca38b770aa
+def flatten(L):
+    if not L:
+        result = []
+    elif len(L) == 1:
+        if type(L[0]) is not list:
+            result = L
+        elif type(L[0]) is list:
+            result = flatten(L[0])
+    else:
+        cut = len(L) // 2
+        result = flatten(L[0: cut]) + flatten(L[cut:])
+    return result
 
 
 
