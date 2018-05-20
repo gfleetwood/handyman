@@ -1,10 +1,36 @@
 import json
+import datetime
 import codecs
 import numpy as np
 import pandas as pd
 import plotnine as pn
 import sklearn.metrics as sk_mt
 from collections import OrderedDict
+from sklearn.metrics import roc_curve as rc
+
+#https://stackoverflow.com/questions/28719067/roc-curve-and-cut-off-point-python
+def cutoff_youdens_j(y, y_hat_probs):
+    '''
+    Role
+    ----
+    Produces a recommended threshold for a binary classification model based on Youden's formula
+  
+    Parameters
+    ---------
+    * y: The true labels
+    * y_hat_probs: The probabilities of the positive class
+  
+    Returns
+    -------
+    A list containing:
+    
+    * num_summary: A pandas dataframe with a summary of the numeric variables
+    * cat_summary: A pandas dataframe with a summary of the categorical variables
+    '''
+    fpr, tpr, thresholds = rc(y, y_hat_probs, pos_label = 1)
+    j_scores = tpr - fpr
+    j_ordered = sorted(zip(j_scores,thresholds))
+    return j_ordered[-1][1]
 
 def data_diagnostics(df, num_cols, cat_cols):
     '''
@@ -224,6 +250,38 @@ def flatten(L):
         cut = len(L) // 2
         result = flatten(L[0: cut]) + flatten(L[cut:])
     return result
+    
+def get_coefficients_logreg(df, model):
+    '''
+    Takes a model and a dataframe and returns a dataframe with the proper column and model coefficient pairs.
+    '''
+    df_coefficient = pd.DataFrame(sorted(list(zip(df.columns, model.coef_[0])), key = lambda x: -x[1]), 
+                                  columns = ['feature', 'coefficient'])
+    
+    return df_coefficient
+    
+    
+def flatten_dict(y):
+    out = {}
+
+    def flatten(x, name=''):
+        if type(x) is dict:
+            for a in x:
+                flatten(x[a], name + a + '_')
+        elif type(x) is list:
+            i = 0
+            for a in x:
+                flatten(a, name + str(i) + '_')
+                i += 1
+        else:
+            out[name[:-1]] = x
+
+    flatten(y)
+    return out
+    
+def get_date_time():
+   return str(datetime.datetime.now()).split(' ')
+
 
 
 
