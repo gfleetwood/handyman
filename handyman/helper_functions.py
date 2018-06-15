@@ -8,6 +8,62 @@ import sklearn.metrics as sk_mt
 from collections import OrderedDict
 from sklearn.metrics import roc_curve as rc
 
+def impute_scale_data(df):
+    '''
+    Role
+    ----
+    Produces a recommended threshold for a binary classification model based on Youden's formula
+  
+    Parameters
+    ---------
+    * y: The true labels
+    * y_hat_probs: The probabilities of the positive class
+  
+    Returns
+    -------
+    A list containing:
+    
+    * num_summary: A pandas dataframe with a summary of the numeric variables
+    * cat_summary: A pandas dataframe with a summary of the categorical variables
+    '''
+    
+    imputer_num = Imputer(strategy = 'median') 
+    scaler = StandardScaler()
+    df.loc[:, df.select_dtypes(exclude = ['object']).columns] = \
+    imputer_num.fit_transform(df.select_dtypes(exclude = ['object']))  
+    df.loc[:, df.select_dtypes(exclude = ['object']).columns] = \
+    scaler.fit_transform(df.select_dtypes(exclude = ['object']))
+    
+    for col in df.select_dtypes(include = ['object']).columns:
+        df.loc[:, col] = df.loc[:, col].fillna(value = df.loc[:, col].value_counts().index[0])
+        
+    return df
+    
+def get_dummies_enhanced(df):
+    '''
+    Role
+    ----
+    Produces a recommended threshold for a binary classification model based on Youden's formula
+  
+    Parameters
+    ---------
+    * y: The true labels
+    * y_hat_probs: The probabilities of the positive class
+  
+    Returns
+    -------
+    A list containing:
+    
+    * num_summary: A pandas dataframe with a summary of the numeric variables
+    * cat_summary: A pandas dataframe with a summary of the categorical variables
+    '''
+    
+    dummies = pd.get_dummies(df, drop_first = True)
+    cols = df.select_dtypes(include = ['object']).columns
+    
+    df_new = pd.concat([df.drop(cols, axis = 1), dummies], axis = 1)
+    return df_new
+
 #https://stackoverflow.com/questions/28719067/roc-curve-and-cut-off-point-python
 def cutoff_youdens_j(y, y_hat_probs):
     '''
@@ -233,12 +289,50 @@ def unserialize_model(df, model_revival, model_index = 0):
     return model_revival
 
 def rf_feature_importance(df, model_rf):
+  
+    '''
+    Role
+    ----
+    T
+  
+    Parameters
+    ---------
+    * 
+    * 
+    * 
+  
+    Returns
+    -------
+    A
+    
+    * num_summary: 
+    * cat_summary:
+    '''
+
     fi = list(zip(df.columns, model_rf.feature_importances_))
     fi_sorted = sorted(fi, key = lambda x: -x[1])
     return fi_sorted
 
-#arbitrary list flattening: https://medium.com/@oliviercruchant/python-flatten-arbitrarily-nested-list-beca38b770aa
 def flatten(L):
+  
+    '''
+    Role
+    ----
+    T
+  
+    Parameters
+    ---------
+    * 
+    * 
+    * 
+  
+    Returns
+    -------
+    A
+    
+    * num_summary: 
+    * cat_summary:
+    '''
     if not L:
         result = []
     elif len(L) == 1:
@@ -253,7 +347,22 @@ def flatten(L):
     
 def get_coefficients_logreg(df, model):
     '''
+    Role
+    ----
     Takes a model and a dataframe and returns a dataframe with the proper column and model coefficient pairs.
+  
+    Parameters
+    ---------
+    * 
+    * 
+    * 
+  
+    Returns
+    -------
+    A
+    
+    * num_summary: 
+    * cat_summary:
     '''
     df_coefficient = pd.DataFrame(sorted(list(zip(df.columns, model.coef_[0])), key = lambda x: -x[1]), 
                                   columns = ['feature', 'coefficient'])
@@ -261,7 +370,25 @@ def get_coefficients_logreg(df, model):
     return df_coefficient
     
     
-def flatten_dict(y):
+def flatten_dict(y):  
+    '''
+    Role
+    ----
+    Takes a model and a dataframe and returns a dataframe with the proper column and model coefficient pairs.
+  
+    Parameters
+    ---------
+    * 
+    * 
+    * 
+  
+    Returns
+    -------
+    A
+    
+    * num_summary: 
+    * cat_summary:
+    '''
     out = {}
 
     def flatten(x, name=''):
@@ -279,7 +406,20 @@ def flatten_dict(y):
     flatten(y)
     return out
     
-def get_date_time():
+def get_date_time():  
+    '''
+    Role
+    ----
+    Returns the system date and time as a string.
+  
+    Parameters
+    ---------
+    * None 
+  
+    Returns
+    -------
+    * String representation of date and time.
+    '''
    return str(datetime.datetime.now()).split(' ')
 
 
