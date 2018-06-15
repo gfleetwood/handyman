@@ -12,50 +12,46 @@ def impute_scale_data(df):
     '''
     Role
     ----
-    Produces a recommended threshold for a binary classification model based on Youden's formula
+    Imputes missing values with the median for numeric features and the mode for categorical ones, and then scales the numeric features
+    by subtracting the mean and dividing by the standard deviation.
   
     Parameters
     ---------
-    * y: The true labels
-    * y_hat_probs: The probabilities of the positive class
+    * df: A pandas dataframe
   
     Returns
     -------
-    A list containing:
-    
-    * num_summary: A pandas dataframe with a summary of the numeric variables
-    * cat_summary: A pandas dataframe with a summary of the categorical variables
+    * df_imputed_scaled: A dataframe that has been imputed and scaled.
     '''
     
     imputer_num = Imputer(strategy = 'median') 
-    scaler = StandardScaler()
     df.loc[:, df.select_dtypes(exclude = ['object']).columns] = \
     imputer_num.fit_transform(df.select_dtypes(exclude = ['object']))  
+    
+    scaler = StandardScaler()
     df.loc[:, df.select_dtypes(exclude = ['object']).columns] = \
     scaler.fit_transform(df.select_dtypes(exclude = ['object']))
     
     for col in df.select_dtypes(include = ['object']).columns:
         df.loc[:, col] = df.loc[:, col].fillna(value = df.loc[:, col].value_counts().index[0])
         
-    return df
+     df_imputed_scaled = df
+        
+    return df_imputed_scaled
     
 def get_dummies_enhanced(df):
     '''
     Role
     ----
-    Produces a recommended threshold for a binary classification model based on Youden's formula
+    A simple extension of pandas.get_dummies which adds the dummied columns (with drop_first=True) and removes the old ones.
   
     Parameters
     ---------
-    * y: The true labels
-    * y_hat_probs: The probabilities of the positive class
+    * df: A pandas dataframe
   
     Returns
     -------
-    A list containing:
-    
-    * num_summary: A pandas dataframe with a summary of the numeric variables
-    * cat_summary: A pandas dataframe with a summary of the categorical variables
+    * df_new: A pandas dataframe with dummied categorical variables.
     '''
     
     dummies = pd.get_dummies(df, drop_first = True)
@@ -64,12 +60,11 @@ def get_dummies_enhanced(df):
     df_new = pd.concat([df.drop(cols, axis = 1), dummies], axis = 1)
     return df_new
 
-#https://stackoverflow.com/questions/28719067/roc-curve-and-cut-off-point-python
 def cutoff_youdens_j(y, y_hat_probs):
     '''
     Role
     ----
-    Produces a recommended threshold for a binary classification model based on Youden's formula
+    Implement's Younden's J Statistic for finding an optimal threshold for a classification model.
   
     Parameters
     ---------
@@ -77,16 +72,16 @@ def cutoff_youdens_j(y, y_hat_probs):
     * y_hat_probs: The probabilities of the positive class
   
     Returns
-    -------
-    A list containing:
-    
-    * num_summary: A pandas dataframe with a summary of the numeric variables
-    * cat_summary: A pandas dataframe with a summary of the categorical variables
+    ------- 
+    * youden_j: A recommended threshold for the model.
     '''
+    
     fpr, tpr, thresholds = rc(y, y_hat_probs, pos_label = 1)
     j_scores = tpr - fpr
     j_ordered = sorted(zip(j_scores,thresholds))
-    return j_ordered[-1][1]
+    youden_j = j_ordered[-1][1]
+    
+    return youden_j
 
 def data_diagnostics(df, num_cols, cat_cols):
     '''
@@ -102,10 +97,8 @@ def data_diagnostics(df, num_cols, cat_cols):
   
     Returns
     -------
-    A list containing:
-    
-    * num_summary: A pandas dataframe with a summary of the numeric variables
-    * cat_summary: A pandas dataframe with a summary of the categorical variables
+    * smry: A list containing: 1) num_summary: A pandas dataframe with a summary of the numeric variables, and 
+    2) cat_summary: A pandas dataframe with a summary of the categorical variables
     '''
 
     # Numerical summary
@@ -136,8 +129,10 @@ def data_diagnostics(df, num_cols, cat_cols):
         df_cat[col].value_counts(normalize = True).reset_index().ix[len(df_cat[col].value_counts()) - 1, col]
         for col in cat_cols
               ]
+    
+    smry = [num_summary_full, cat_summary]
 
-    return ([num_summary_full, cat_summary])
+    return (smry)
 
 
 def get_num_corr_plot(df, num_cols):
@@ -153,8 +148,6 @@ def get_num_corr_plot(df, num_cols):
 
     Returns
     -------
-    A list containing:
-
     * df_num_correlations_plot: A heatmap plot of the correlation between the numeric variables.
     '''
 
@@ -172,22 +165,19 @@ def classification_metrics(y_actual, y_predicted):
     '''
     Role
     ----
-    Takes a dataframe and a list of its numeric columns and returns a plot of the correlation between variables.
+    Generates a set of classification scores for a model's predictions.
 
     Parameters
     ---------
-    * df: A pandas dataframe
-    * num_cols: A list of the numeric column names
+    * y_actual: The correct labels for the data.
+    * y_predicted: The predicted labels produced by a model.
 
     Returns
     -------
-    A list containing:
-
-    * df_num_correlations_plot: A heatmap plot of the correlation between the numeric variables.
+    * metrics_dict: A dictionary with the accuracy, roc-auc, and f1 scores for the model's predictions.
     '''
     
     metrics_dict = OrderedDict()
-    metrics_dict['model_name'] = model_name
     metrics_dict['accuracy'] = sum(y_actual == y_prediction)/float(len(y_actual))
     metrics_dict['roc_auc'] = sk_mt.roc_auc_score(y_actual, y_predicted)
     metrics_dict['f1_score'] = sk_mt.f1_score(y_actual, y_predicted)
@@ -199,24 +189,21 @@ def kaiser_harris_criterion(df):
     '''
     Role
     ----
-    T
+    Implement's the Kaiser-Harris criterion for suggesting an optimal number of dimensions for Principal Component Analysis.
   
     Parameters
     ---------
-    * 
-    * 
-    * 
+    * df: A pandas dataframe.
   
     Returns
     -------
-    A
-    
-    * num_summary: 
-    * cat_summary:
+    * dim_rec: The recommended dimensional space to project the original data into.
     '''
+    
     cov_mat = np.cov(df.T)
     e_vals, _ = np.linalg.eig(cov_mat)
-    return len(e_vals[e_vals > 1])
+    dim_rec = len(e_vals[e_vals > 1])
+    return(dim_rec)
     
 
 def serialize_model(model, descr):
