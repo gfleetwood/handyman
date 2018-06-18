@@ -211,20 +211,16 @@ def serialize_model(model, descr):
     '''
     Role
     ----
-    T
+    Stores a fitted model's parameters and attributes in a dataframe.
   
     Parameters
     ---------
-    * 
-    * 
-    * 
+    * model: A fitted scikit-learn model.
+    * descr: A text description of the model that the user wants to note.
   
     Returns
     -------
-    A
-    
-    * num_summary: 
-    * cat_summary:
+    * df: A dataframe with the model's type, the supplied description, the model's parameters,and its attributes.
     '''
     
     attrs = [i for i in dir(model) if i.endswith('_') and not i.endswith('__')]   
@@ -248,20 +244,17 @@ def unserialize_model(df, model_revival, model_index = 0):
     '''
     Role
     ----
-    T
+    Takes a dataframe produced by serialize_model and recreates the model object from a specified row.
   
     Parameters
     ---------
-    * 
-    * 
-    * 
+    * df: A dataframe of model info produced by serialize_model.
+    * model_revival: An uninitialized model object of the type to be reconstructed.
+    * model_index: Assuming df consists of multiple models, this is the index of the one to be recreated.
   
     Returns
-    -------
-    A
-    
-    * num_summary: 
-    * cat_summary:
+    -------  
+    * model_revival: The recreated model.
     '''
     
     params = json.loads(df.params[model_index])
@@ -280,101 +273,35 @@ def rf_feature_importance(df, model_rf):
     '''
     Role
     ----
-    T
+    A convenience function to show the feature importances produced by a Random Forest model in a nice format.
   
     Parameters
     ---------
-    * 
-    * 
-    * 
+    * df: The feature matrix passed to model_rf
+    * model_rf: The Random Forest model constructed from df and the target.
   
     Returns
-    -------
-    A
-    
-    * num_summary: 
-    * cat_summary:
+    -------    
+    * fi_sorted: A sorted lists of feature names and their importance as per model_rf.
     '''
 
     fi = list(zip(df.columns, model_rf.feature_importances_))
     fi_sorted = sorted(fi, key = lambda x: -x[1])
     return fi_sorted
 
-def flatten(L):
-  
-    '''
-    Role
-    ----
-    T
-  
-    Parameters
-    ---------
-    * 
-    * 
-    * 
-  
-    Returns
-    -------
-    A
-    
-    * num_summary: 
-    * cat_summary:
-    '''
-    if not L:
-        result = []
-    elif len(L) == 1:
-        if type(L[0]) is not list:
-            result = L
-        elif type(L[0]) is list:
-            result = flatten(L[0])
-    else:
-        cut = len(L) // 2
-        result = flatten(L[0: cut]) + flatten(L[cut:])
-    return result
-    
-def get_coefficients_logreg(df, model):
-    '''
-    Role
-    ----
-    Takes a model and a dataframe and returns a dataframe with the proper column and model coefficient pairs.
-  
-    Parameters
-    ---------
-    * 
-    * 
-    * 
-  
-    Returns
-    -------
-    A
-    
-    * num_summary: 
-    * cat_summary:
-    '''
-    df_coefficient = pd.DataFrame(sorted(list(zip(df.columns, model.coef_[0])), key = lambda x: -x[1]), 
-                                  columns = ['feature', 'coefficient'])
-    
-    return df_coefficient
-    
-    
 def flatten_dict(y):  
     '''
     Role
     ----
-    Takes a model and a dataframe and returns a dataframe with the proper column and model coefficient pairs.
-  
+    Flatten an arbitrarily nested dictionary.
+    
     Parameters
     ---------
-    * 
-    * 
-    * 
+    * y: A dictionary
   
     Returns
-    -------
-    A
-    
-    * num_summary: 
-    * cat_summary:
+    -------    
+    * out: A flattened version of y. 
     '''
     out = {}
 
@@ -392,6 +319,53 @@ def flatten_dict(y):
 
     flatten(y)
     return out
+
+def flatten_list(L):
+  
+    '''
+    Role
+    ----
+    Flattens an arbitrarily nested list.
+  
+    Parameters
+    ---------
+    * L: A nested list
+  
+    Returns
+    ------- 
+    * result: A flattened version of L
+    '''
+    if not L:
+        result = []
+    elif len(L) == 1:
+        if type(L[0]) is not list:
+            result = L
+        elif type(L[0]) is list:
+            result = flatten(L[0])
+    else:
+        cut = len(L) // 2
+        result = flatten(L[0: cut]) + flatten(L[cut:])
+    return result
+    
+def get_coefficients(df, model):
+    '''
+    Role
+    ----
+    A convenience function to match the coefficients of a model to the features they correspond to.
+  
+    Parameters
+    ---------
+    * df: A pandas dataframe of features used in model.
+    * model: A fitted scikit-learn model.
+  
+    Returns
+    -------    
+    * df_coefficient: A dataframe of features and their coefficients.
+    '''
+    df_coefficient = pd.DataFrame(sorted(list(zip(df.columns, model.coef_[0])), key = lambda x: -x[1]), 
+                                  columns = ['feature', 'coefficient'])
+    
+    return df_coefficient
     
 def get_date_time():  
     '''
