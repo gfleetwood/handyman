@@ -7,6 +7,8 @@ import plotnine as pn
 import sklearn.metrics as sk_mt
 from collections import OrderedDict
 from sklearn.metrics import roc_curve as rc
+from sklearn.preprocessing import Imputer
+from sklearn.preprocessing import StandardScaler
 
 def impute_scale_data(df):
     '''
@@ -35,7 +37,7 @@ def impute_scale_data(df):
     for col in df.select_dtypes(include = ['object']).columns:
         df.loc[:, col] = df.loc[:, col].fillna(value = df.loc[:, col].value_counts().index[0])
         
-     df_imputed_scaled = df
+    df_imputed_scaled = df
         
     return df_imputed_scaled
     
@@ -381,4 +383,4 @@ def get_date_time():
     -------
     * * A list contains two elements as strings: 1) date, and 2) time.
     '''
-   return str(datetime.datetime.now()).split(' ')
+    return str(datetime.datetime.now()).split(' ')
