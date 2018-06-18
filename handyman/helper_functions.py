@@ -379,6 +379,6 @@ def get_date_time():
   
     Returns
     -------
-    * String representation of date and time.
+    * * A list contains two elements as strings: 1) date, and 2) time.
     '''
    return str(datetime.datetime.now()).split(' ')
