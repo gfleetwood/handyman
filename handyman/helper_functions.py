@@ -300,33 +300,6 @@ def flatten_dict(y):
 
     flatten(y)
     return out
-
-def flatten_list(L):
-  
-    '''
-    Role
-    ----
-    Flattens an arbitrarily nested list.
-  
-    Parameters
-    ---------
-    * L: A nested list
-  
-    Returns
-    ------- 
-    * result: A flattened version of L
-    '''
-    if not L:
-        result = []
-    elif len(L) == 1:
-        if type(L[0]) is not list:
-            result = L
-        elif type(L[0]) is list:
-            result = flatten(L[0])
-    else:
-        cut = len(L) // 2
-        result = flatten(L[0: cut]) + flatten(L[cut:])
-    return result
     
 def get_coefficients(df, model):
     '''
