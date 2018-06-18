@@ -41,27 +41,6 @@ def impute_scale_data(df):
         
     return df_imputed_scaled
     
-def get_dummies_enhanced(df):
-    '''
-    Role
-    ----
-    A simple extension of pandas.get_dummies which adds the dummied columns (with drop_first=True) and removes the old ones.
-  
-    Parameters
-    ---------
-    * df: A pandas dataframe
-  
-    Returns
-    -------
-    * df_new: A pandas dataframe with dummied categorical variables.
-    '''
-    
-    dummies = pd.get_dummies(df, drop_first = True)
-    cols = df.select_dtypes(include = ['object']).columns
-    
-    df_new = pd.concat([df.drop(cols, axis = 1), dummies], axis = 1)
-    return df_new
-
 def cutoff_youdens_j(y, y_hat_probs):
     '''
     Role
