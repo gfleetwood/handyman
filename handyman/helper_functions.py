@@ -45,7 +45,7 @@ def cutoff_youdens_j(y, y_hat_probs):
     '''
     Role
     ----
-    Implement's Younden's J Statistic for finding an optimal threshold for a classification model.
+    Implement's Younden's J Statistic for finding an optimal threshold for a binary classification model.
   
     Parameters
     ---------
