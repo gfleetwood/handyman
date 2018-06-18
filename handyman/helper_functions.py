@@ -382,27 +382,3 @@ def get_date_time():
     * String representation of date and time.
     '''
    return str(datetime.datetime.now()).split(' ')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
