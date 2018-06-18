@@ -10,4 +10,4 @@ Clone this repo, cd into it, and run: `python install setup.py`.
 
 ## Usage
 
-See the documentation.
+See the [documentation](https://github.com/gfleetwood/handyman/wiki/Documentation).
