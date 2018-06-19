@@ -159,7 +159,7 @@ def classification_metrics(y_actual, y_predicted):
     '''
     
     metrics_dict = OrderedDict()
-    metrics_dict['accuracy'] = sum(y_actual == y_prediction)/float(len(y_actual))
+    metrics_dict['accuracy'] = sum(y_actual == y_predicted)/float(len(y_actual))
     metrics_dict['roc_auc'] = sk_mt.roc_auc_score(y_actual, y_predicted)
     metrics_dict['f1_score'] = sk_mt.f1_score(y_actual, y_predicted)
 
