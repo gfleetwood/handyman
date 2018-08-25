@@ -177,7 +177,6 @@ def classification_metrics(y_actual, y_predicted):
 
     return(metrics_dict)
     
-    
 def kaiser_harris_criterion(df):
     '''
     Role
@@ -481,3 +480,51 @@ def ols_with_diagnostics(df, formula = 'sepal_length ~ sepal_width'):
     plt.legend(loc='upper right');
     
     return('Done')
+
+
+def classification_status(y_train, y_pred, y_pred_proba, cv_scores):
+    print('classification report: ')
+    print('\n')
+    print(sk_met.classification_report(y_train, y_pred))
+    print('\n')
+    print('cv scores: mean - {:0.2f} & std - {:0.2f} '.format(np.mean(cv_scores), np.std(cv_scores)))
+    print('\n')
+    print('confusion matrix: ')
+    print('\n')
+    print(sk_met.confusion_matrix(y_train, y_pred))
+    print('\n')
+    print('auc-roc: ')
+    print('\n')
+    fpr, tpr, _ = sk_met.roc_curve(y_train, y_pred_proba[:, 1])
+    auc = sk_met.roc_auc_score(y_train, y_pred)
+    plt.plot(fpr, tpr, label = "auc=" + str(np.round(auc, 2)))
+    plt.legend(loc = 4)
+    plt.show()
+    print('\n')
+    print("brier score: ", sk_met.brier_score_loss(y_train, y_pred)) # lower is better
+    
+## Borrowed from the code for pyjanitor
+
+def clean_names(df):
+
+    def convert(name):
+        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+    
+    df = df.rename(
+        columns = lambda x: x.replace(" ", "_")
+        .replace("/", "_")
+        .replace(":", "_")
+        .replace("'", "")
+        .replace("’", "")
+        .replace(",", "_")
+        .replace("?", "_")
+        .replace("-", "_")
+        .replace("(", "_")
+        .replace(")", "_")
+        .replace(".", "_")
+    )\
+    .rename(columns= lambda x: convert(x))\
+    .rename(columns = lambda x: re.sub("_+", "_", x))
+    return df
+
