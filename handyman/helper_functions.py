@@ -527,4 +527,8 @@ def clean_names(df):
     .rename(columns= lambda x: convert(x))\
     .rename(columns = lambda x: re.sub("_+", "_", x))
     return df
+    
+    
+ def get_types_na_count(df):
+    return(pd.concat([df.dtypes, df.isnull().sum()], axis = 1))
 
