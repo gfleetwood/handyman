@@ -14,6 +14,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import statsmodels.formula.api as smf
 from statsmodels.graphics.gofplots import ProbPlot
+from mlxtend.frequent_patterns import apriori
+from mlxtend.frequent_patterns import association_rules
 
 plt.style.use('seaborn')
 plt.rc('font', size=14)
@@ -532,3 +534,35 @@ def clean_names(df):
  def get_types_na_count(df):
     return(pd.concat([df.dtypes, df.isnull().sum()], axis = 1))
 
+def get_rules(df):
+    
+    frequent_itemsets = apriori(df, min_support = 0.07, use_colnames = True)
+    rules = association_rules(frequent_itemsets, metric = "lift", min_threshold = 1)
+    results = rules.loc[(rules['consequents'] == rules.consequents.unique()[0]),
+                            ['antecedents', 'consequents', 'lift', 'confidence']] \
+                   .sort_values(['lift', 'confidence'], ascending = [False, False])
+    
+    return(results)
+
+def classification_status(y_train, y_pred, y_pred_proba, cv_scores):
+    print('classification report: ')
+    print('\n')
+    print(sk_met.classification_report(y_train, y_pred))
+    print('\n')
+    print('cv scores: mean - {:0.2f} & std - {:0.2f} '.format(np.mean(cv_scores), np.std(cv_scores)))
+    print('\n')
+    print('confusion matrix: ')
+    print('\n')
+    print(sk_met.confusion_matrix(y_train, y_pred))
+    print('\n')
+    print('auc-roc: ')
+    print('\n')
+    fpr, tpr, _ = sk_met.roc_curve(y_train, y_pred_proba[:, 1])
+    auc = sk_met.roc_auc_score(y_train, y_pred)
+    plt.plot(fpr, tpr, label = "auc=" + str(np.round(auc, 2)))
+    plt.legend(loc = 4)
+    plt.show()
+    print('\n')
+    print("brier score: ", sk_met.brier_score_loss(y_train, y_pred)) # lower is better
+    
+exclusion = lambda x,y: [j for i,j in enumerate(x) if i != y]
