@@ -5,14 +5,17 @@ import numpy as np
 import pandas as pd
 import plotnine as pn
 import sklearn.metrics as sk_mt
-from collections import OrderedDict
-from sklearn.metrics import roc_curve as rc
-from sklearn.preprocessing import Imputer
-from sklearn.preprocessing import StandardScaler
 import statsmodels.formula.api as sm
 import seaborn as sns
 import matplotlib.pyplot as plt
 import statsmodels.formula.api as smf
+import subprocess as sp
+
+from io import StringIO
+from collections import OrderedDict
+from sklearn.metrics import roc_curve as rc
+from sklearn.preprocessing import Imputer
+from sklearn.preprocessing import StandardScaler
 from statsmodels.graphics.gofplots import ProbPlot
 from mlxtend.frequent_patterns import apriori
 from mlxtend.frequent_patterns import association_rules
@@ -505,7 +508,7 @@ def classification_status(y_train, y_pred, y_pred_proba, cv_scores):
     print('\n')
     print("brier score: ", sk_met.brier_score_loss(y_train, y_pred)) # lower is better
     
-## Borrowed from the code for pyjanitor
+## Borrowed from the pyjanitor
 
 def clean_names(df):
 
@@ -565,4 +568,23 @@ def classification_status(y_train, y_pred, y_pred_proba, cv_scores):
     print('\n')
     print("brier score: ", sk_met.brier_score_loss(y_train, y_pred)) # lower is better
     
+def read_csv_sample(fpath, nrows, seed = 8, header = "-r"):
+    
+    sample = sp.getoutput('subsample -s {seed} -n {nrows} {fpath} {header}'\
+                          .format(seed = seed, nrows = nrows, fpath = fpath, header = header))
+    
+    # Remove the first line which is metadata
+    sample_cleaned = StringIO(sample[(sample.find("\n") + 1):])
+    
+    df = pd.read_csv(sample_cleaned, sep = ",")
+    
+    return(df)
+    
 exclusion = lambda x,y: [j for i,j in enumerate(x) if i != y]
+
+
+
+
+
+
+
