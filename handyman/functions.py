@@ -10,7 +10,6 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import statsmodels.formula.api as smf
 import subprocess as sp
-
 from io import StringIO
 from collections import OrderedDict
 from sklearn.metrics import roc_curve as rc
@@ -25,6 +24,30 @@ plt.rc('font', size=14)
 plt.rc('figure', titlesize=18)
 plt.rc('axes', labelsize=15)
 plt.rc('axes', titlesize=18)
+
+exclusion = lambda x,y: [j for i,j in enumerate(x) if i != y]
+
+def keras_history(history, metric = "rmse"):
+
+    plt.plot(history.history[metric])
+    plt.plot(history.history[('val_' + metric)])
+    plt.title('model ' + metric)
+    plt.ylabel(metric)
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc = 'upper left')
+    plt.show()
+
+    plt.plot(history.history['loss'])
+    plt.plot(history.history['val_loss'])
+    plt.title('model loss')
+    plt.ylabel('loss')
+    plt.xlabel('epoch')
+    plt.legend(['train', 'validation'], loc='upper left')
+    plt.show()
+
+def lstm_reshape(df, num_features = 1):
+    result = np.array(df).reshape((df.shape[0], df.shape[1], num_features))
+    return(result)
 
 def impute_scale_data(df):
     '''
@@ -534,8 +557,10 @@ def clean_names(df):
     return df
     
     
- def get_types_na_count(df):
-    return(pd.concat([df.dtypes, df.isnull().sum()], axis = 1))
+def get_types_na_count(df):
+  result = pd.concat([df.dtypes, df.isnull().sum()], axis = 1)
+  result.columns = ["type", "na_count"]
+  return(result)
 
 def get_rules(df):
     
@@ -579,12 +604,106 @@ def read_csv_sample(fpath, nrows, seed = 8, header = "-r"):
     df = pd.read_csv(sample_cleaned, sep = ",")
     
     return(df)
+
+def feature_selection_classif(X, y, fs_type = "mdl"):   
     
-exclusion = lambda x,y: [j for i,j in enumerate(x) if i != y]
+    if fs_type == "mic":
+        fs_scores = sk_fs.mutual_info_classif(X, y)
+        fs_cols = [x[0] for x in list(zip(X_train.columns, fs_scores)) if x[1] > 0]
+    elif fs_type == "f_classif":
+        fs_scores = sk_fs.f_classif(X_train, y_train)
+        fs_cols = [x[0] for x in list(zip(X_train.columns, fs_scores[1])) if x[1] < .05]
+    else:
+        mdl = sk_fs.RFECV(sk_esb.RandomForestClassifier(), cv = 5, scoring = 'f1', n_jobs = -1)
+        mdl.fit(X, y)
+        fs_cols = X.columns[mdl.support_]
+
+    X_fs = X.loc[:, fs_cols]
+    
+    return(X_fs)
 
 
+def get_shap_values(model, X, y):
 
+    model.fit(X, y)
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(model)
 
+    # shap.summary_plot(shap_values, X_train) # all records explained
+    # shap.summary_plot(shap_values, X_train, plot_type = "bar") # shap mae for features across all records
 
+    df_shap = pd.DataFrame(list(zip(np.mean(shap_values, axis = 0), X.columns)),
+                           columns = ['shap_mean', 'feature'])
+    df_shap = df_shap[['feature', 'shap_mean']]
+    df_shap['shap_mean_abs'] = np.absolute(df_shap['shap_mean'])
+    df_shap.sort_values(['shap_mean_abs'], ascending = False, inplace = True)
+    
+    return(df_shap)
+    
+def auto_fe(df, agg = None, tran = None):
+    
+    aggs = ['mean', 'max', 'percent_true', 'last']
+    tran = ['subtract', 'divide']
+    
+    es = ft.EntitySet(id = "test")
+    es = es.entity_from_dataframe(entity_id = 'd', dataframe = df, make_index = True, index = 'ind')
 
+    fm, X_ft1 = ft.dfs(entityset = es, target_entity = 'd', agg_primitives = aggs, trans_primitives = tran)
 
+    _, X_ft2 = ft.dfs(entityset = es, target_entity = 'd', max_depth = 2)
+    
+    return(X_ft1)
+    
+ 
+def mdl_cv(model, X, y, cv = 5):
+    cv_scores = sk_ms.cross_val_score(model, X, y, cv = cv, n_jobs = -1)
+    return(cv_scores.mean(), cv_scores.std())
+    
+def build_ensemble(model_list):
+    
+    ensemble = mlx.classifier.StackingCVClassifier(classifiers = model_list[:-1],
+                                              use_probas = True, cv = 5, 
+                                              meta_classifier = model_list[-1])
+    
+    return(ensemble)
+
+def get_model_baselines(X, y, ml_type = 'classification'):
+    
+    ml_dict = {'classification': sk_lm.LogisticRegression(), 'regression':  sk_lm.LinearRegression()}
+    mdl = ml_dict[ml_type]
+    cv_scores = sk_ms.cross_val_score(mdl, X.values, y.values, cv = 5, n_jobs = -1)
+
+    return("Naive Baseline: ", y.value_counts(normalize = True).to_dict(), 
+           "Model Baseline (mu & sigma): ", cv_scores.mean(), cv_scores.std())
+
+def plot_learning_curve(model, X, y):    
+
+    folds = sk_ms.StratifiedKFold(5)
+    sizes = np.linspace(0.3, 1.0, 10)
+
+    viz = LearningCurve(model, cv = folds, train_sizes = sizes, scoring = 'accuracy', n_jobs = -1)
+    viz.fit(X, y)
+    viz.poof()
+
+def custom_metrics(y_true, y_pred, metrics_dict = {'accuracy': 0, 'recall': 0, 'precision': 0, 'f1': 0}):
+    
+    metrics_dict['accuracy'] = sk_met.accuracy_score(y_true, y_pred)
+    metrics_dict['f1'] = sk_met.f1_score(y_true, y_pred)
+    metrics_dict['recall'] = sk_met.recall_score(y_true, y_pred)
+    metrics_dict['precision'] = sk_met.precision_score(y_true, y_pred)
+        
+    return metrics_dict
+
+def custom_metrics_cv(clf, X, y, metrics_dict = {'accuracy': [], 'recall': [], 'precision': [], 'f1': []}):
+    
+    for metric in metrics_dict.keys():
+        cv_scores = sk_ms.cross_val_score(clf, X.values, y.values, scoring = 'f1', cv = 5, n_jobs = -1)
+        metrics_dict[metric] = [cv_scores.mean(), cv_scores.std()]
+        
+    return metrics_dict
+    
+custom_brier_scorer = sk_met.make_scorer(proba_score_proxy, greater_is_better = False, needs_proba = True, 
+                             class_idx = 1, proxied_func = sk_met.brier_score_loss)
+
+def proba_score_proxy(y_true, y_probs, class_idx, proxied_func, **kwargs):
+    return proxied_func(y_true, y_probs[:, class_idx], **kwargs)
