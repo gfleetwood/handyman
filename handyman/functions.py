@@ -707,3 +707,26 @@ custom_brier_scorer = sk_met.make_scorer(proba_score_proxy, greater_is_better = 
 
 def proba_score_proxy(y_true, y_probs, class_idx, proxied_func, **kwargs):
     return proxied_func(y_true, y_probs[:, class_idx], **kwargs)
+    
+def lstm_reshape(df, num_features = 1):
+    result = np.array(df).reshape((df.shape[0], df.shape[1], num_features))
+    return(result)
+
+def create_lstm_model(X, y, metric = ["accuracy"]):
+
+    mdl = Sequential() 
+
+    mdl.add(LSTM(units = 64, return_sequences = False, input_shape = (X.shape[1], 1))) 
+    mdl.add(Dropout(0.2))
+    # mdl.add(LSTM(units = 64, return_sequences = True)) 
+    # mdl.add(Dropout(0.2))
+    # mdl.add(LSTM(units = 64, return_sequences = True)) 
+    # mdl.add(Dropout(0.2))
+    # mdl.add(LSTM(units = 64))  
+    # mdl.add(Dropout(0.2))
+    mdl.add(Dense(units = 1))
+
+    mdl.compile(loss = "mean_squared_error", optimizer = "adam", metrics = metric)
+    history = mdl.fit(X, y, epochs = 10, batch_size = 1, validation_split = 0.2, verbose = 0)
+    
+    return([mdl, history])
