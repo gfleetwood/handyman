@@ -18,6 +18,7 @@ from sklearn.preprocessing import StandardScaler
 from statsmodels.graphics.gofplots import ProbPlot
 from mlxtend.frequent_patterns import apriori
 from mlxtend.frequent_patterns import association_rules
+import pyodbc
 
 plt.style.use('seaborn')
 plt.rc('font', size=14)
@@ -730,3 +731,38 @@ def create_lstm_model(X, y, metric = ["accuracy"]):
     history = mdl.fit(X, y, epochs = 10, batch_size = 1, validation_split = 0.2, verbose = 0)
     
     return([mdl, history])
+    
+ def get_data(server, un, pwd, driver, db, query):
+    """Connects to database and gets the data outlined by query as a dataframe."""
+    
+    con = pyodbc.connect('DRIVER=' + driver +
+                     ';PORT=1433;' 'SERVER=' + server +
+                     ';PORT=1443;' 'DATABASE=' + db +
+                     ';UID=' + un + ';PWD=' + pwd)
+                     
+    cursor = con.cursor()
+    cursor.execute(query)
+    cols = [column[0] for column in cursor.description]
+    data = [list(row) for row in cursor.fetchall()]
+    df = pd.DataFrame(data = data, columns = cols)
+
+    cursor.close()
+    con.close()
+    return(df)
+
+def set_data(server, un, pwd, driver, db, query, data):
+    """Connects to database and gets the data outlined by query as a dataframe."""
+    con = pyodbc.connect('DRIVER=' + DRIVER +
+                     ';PORT=1433;' 'SERVER=' + SERVER +
+                     ';PORT=1443;' 'DATABASE=' + DB +
+                     ';UID=' + USERNAME + ';PWD=' + PASSWORD)
+    cursor = con.cursor()
+    
+    #query ex: "insert into reference.{tbname}({c1}, {c2}, depth) values (%d, %d, %d)"
+    for val in data:
+        cursor.execute(insertion_query)
+        CXN.commit()
+
+    cursor.close()
+    con.close()
+    return 'Write Done'
