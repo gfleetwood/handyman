@@ -8,4 +8,4 @@ Clone this repo, cd into it, and run: `python install setup.py`.
 
 ## Usage
 
-See the [documentation](https://github.com/gfleetwood/handyman/wiki/Documentation) and [examples](https://github.com/gfleetwood/handyman/blob/master/examples.ipynb).
+See the [documentation](https://github.com/gfleetwood/handyman/blob/master/examples.ipynb) for examples.

@@ -19,14 +19,414 @@ from statsmodels.graphics.gofplots import ProbPlot
 from mlxtend.frequent_patterns import apriori
 from mlxtend.frequent_patterns import association_rules
 import pyodbc
+import statsmodels.api as sm
 
 plt.style.use('seaborn')
-plt.rc('font', size=14)
-plt.rc('figure', titlesize=18)
-plt.rc('axes', labelsize=15)
-plt.rc('axes', titlesize=18)
+plt.rc('font', size = 14)
+plt.rc('figure', titlesize = 18)
+plt.rc('axes', labelsize = 15)
+plt.rc('axes', titlesize = 18)
 
-exclusion = lambda x,y: [j for i,j in enumerate(x) if i != y]
+def exclusion(x,y): 
+
+    result = lambda x,y: [j for i,j in enumerate(x) if i != y]
+    return(result)
+
+def ols_with_diagnostics(df, formula = 'sepal_length ~ sepal_width'):
+    # https://medium.com/@emredjan/emulating-r-regression-plots-in-python-43741952c034
+    
+    model_fit = sm.ols(formula, data = df).fit()
+
+    # fitted values (need a constant term for intercept)
+    model_fitted_y = model_fit.fittedvalues
+
+    # model residuals
+    model_residuals = model_fit.resid
+
+    # normalized residuals
+    model_norm_residuals = model_fit.get_influence().resid_studentized_internal
+
+    # absolute squared normalized residuals
+    model_norm_residuals_abs_sqrt = np.sqrt(np.abs(model_norm_residuals))
+
+    # absolute residuals
+    model_abs_resid = np.abs(model_residuals)
+
+    # leverage, from statsmodels internals
+    model_leverage = model_fit.get_influence().hat_matrix_diag
+
+    # cook's distance, from statsmodels internals
+    model_cooks = model_fit.get_influence().cooks_distance[0]
+    
+    plot_lm_1 = plt.figure(1)
+    plot_lm_1.set_figheight(8)
+    plot_lm_1.set_figwidth(12)
+
+    plot_lm_1.axes[0] = sns.residplot(model_fitted_y, 'sepal_length', data=df, 
+                              lowess=True, 
+                              scatter_kws={'alpha': 0.5}, 
+                              line_kws={'color': 'red', 'lw': 1, 'alpha': 0.8})
+
+    plot_lm_1.axes[0].set_title('Residuals vs Fitted')
+    plot_lm_1.axes[0].set_xlabel('Fitted values')
+    plot_lm_1.axes[0].set_ylabel('Residuals')
+
+    # annotations
+    abs_resid = model_abs_resid.sort_values(ascending=False)
+    abs_resid_top_3 = abs_resid[:3]
+
+    for i in abs_resid_top_3.index:
+        plot_lm_1.axes[0].annotate(i, 
+                                   xy=(model_fitted_y[i], 
+                                       model_residuals[i]));
+        
+    QQ = ProbPlot(model_norm_residuals)
+    plot_lm_2 = QQ.qqplot(line='45', alpha=0.5, color='#4C72B0', lw=1)
+
+    plot_lm_2.set_figheight(8)
+    plot_lm_2.set_figwidth(12)
+
+    plot_lm_2.axes[0].set_title('Normal Q-Q')
+    plot_lm_2.axes[0].set_xlabel('Theoretical Quantiles')
+    plot_lm_2.axes[0].set_ylabel('Standardized Residuals');
+
+    # annotations
+    abs_norm_resid = np.flip(np.argsort(np.abs(model_norm_residuals)), 0)
+    abs_norm_resid_top_3 = abs_norm_resid[:3]
+
+    for r, i in enumerate(abs_norm_resid_top_3):
+        plot_lm_2.axes[0].annotate(i, 
+                                   xy=(np.flip(QQ.theoretical_quantiles, 0)[r],
+                                       model_norm_residuals[i]));
+        
+    plot_lm_3 = plt.figure(3)
+    plot_lm_3.set_figheight(8)
+    plot_lm_3.set_figwidth(12)
+
+    plt.scatter(model_fitted_y, model_norm_residuals_abs_sqrt, alpha=0.5)
+    sns.regplot(model_fitted_y, model_norm_residuals_abs_sqrt, 
+                scatter=False, 
+                ci=False, 
+                lowess=True,
+                line_kws={'color': 'red', 'lw': 1, 'alpha': 0.8})
+
+    plot_lm_3.axes[0].set_title('Scale-Location')
+    plot_lm_3.axes[0].set_xlabel('Fitted values')
+    plot_lm_3.axes[0].set_ylabel('$\sqrt{|Standardized Residuals|}$');
+
+    # annotations
+    abs_sq_norm_resid = np.flip(np.argsort(model_norm_residuals_abs_sqrt), 0)
+    abs_sq_norm_resid_top_3 = abs_sq_norm_resid[:3]
+
+    for i in abs_norm_resid_top_3:
+        plot_lm_3.axes[0].annotate(i, 
+                                   xy=(model_fitted_y[i], 
+                                       model_norm_residuals_abs_sqrt[i]));
+        
+    plot_lm_4 = plt.figure(4)
+    plot_lm_4.set_figheight(8)
+    plot_lm_4.set_figwidth(12)
+
+    plt.scatter(model_leverage, model_norm_residuals, alpha=0.5)
+    sns.regplot(model_leverage, model_norm_residuals, 
+                scatter=False, 
+                ci=False, 
+                lowess=True,
+                line_kws={'color': 'red', 'lw': 1, 'alpha': 0.8})
+
+    plot_lm_4.axes[0].set_xlim(0, 0.20)
+    plot_lm_4.axes[0].set_ylim(-3, 5)
+    plot_lm_4.axes[0].set_title('Residuals vs Leverage')
+    plot_lm_4.axes[0].set_xlabel('Leverage')
+    plot_lm_4.axes[0].set_ylabel('Standardized Residuals')
+
+    # annotations
+    leverage_top_3 = np.flip(np.argsort(model_cooks), 0)[:3]
+
+    for i in leverage_top_3:
+        plot_lm_4.axes[0].annotate(i, 
+                                   xy=(model_leverage[i], 
+                                       model_norm_residuals[i]))
+
+    # shenanigans for cook's distance contours
+    def graph(formula, x_range, label=None):
+        x = x_range
+        y = formula(x)
+        plt.plot(x, y, label=label, lw=1, ls='--', color='red')
+
+    p = len(model_fit.params) # number of model parameters
+
+    graph(lambda x: np.sqrt((0.5 * p * (1 - x)) / x), 
+          np.linspace(0.001, 0.200, 50), 
+          'Cook\'s distance') # 0.5 line
+    graph(lambda x: np.sqrt((1 * p * (1 - x)) / x), 
+          np.linspace(0.001, 0.200, 50)) # 1 line
+    plt.legend(loc='upper right');
+    
+    return('Done')
+
+
+def classification_status(y_train, y_pred, y_pred_proba, cv_scores):
+    print('classification report: ')
+    print('\n')
+    print(sk_met.classification_report(y_train, y_pred))
+    print('\n')
+    print('cv scores: mean - {:0.2f} & std - {:0.2f} '.format(np.mean(cv_scores), np.std(cv_scores)))
+    print('\n')
+    print('confusion matrix: ')
+    print('\n')
+    print(sk_met.confusion_matrix(y_train, y_pred))
+    print('\n')
+    print('auc-roc: ')
+    print('\n')
+    fpr, tpr, _ = sk_met.roc_curve(y_train, y_pred_proba[:, 1])
+    auc = sk_met.roc_auc_score(y_train, y_pred)
+    plt.plot(fpr, tpr, label = "auc=" + str(np.round(auc, 2)))
+    plt.legend(loc = 4)
+    plt.show()
+    print('\n')
+    print("brier score: ", sk_met.brier_score_loss(y_train, y_pred)) # lower is better
+    
+def clean_names(df):
+
+    ## Borrowed from pyjanitor
+
+    def convert(name):
+        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
+        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
+    
+    df = df.rename(
+        columns = lambda x: x.replace(" ", "_")
+        .replace("/", "_")
+        .replace(":", "_")
+        .replace("'", "")
+        .replace("’", "")
+        .replace(",", "_")
+        .replace("?", "_")
+        .replace("-", "_")
+        .replace("(", "_")
+        .replace(")", "_")
+        .replace(".", "_")
+    )\
+    .rename(columns= lambda x: convert(x))\
+    .rename(columns = lambda x: re.sub("_+", "_", x))
+    return df
+    
+    
+def get_types_na_count(df):
+  result = pd.concat([df.dtypes, df.isnull().sum()], axis = 1)
+  result.columns = ["type", "na_count"]
+  return(result)
+
+def get_rules(df):
+    
+    frequent_itemsets = apriori(df, min_support = 0.07, use_colnames = True)
+    rules = association_rules(frequent_itemsets, metric = "lift", min_threshold = 1)
+    results = rules.loc[(rules['consequents'] == rules.consequents.unique()[0]),
+                            ['antecedents', 'consequents', 'lift', 'confidence']] \
+                   .sort_values(['lift', 'confidence'], ascending = [False, False])
+    
+    return(results)
+
+def classification_status(y_train, y_pred, y_pred_proba, cv_scores):
+    print('classification report: ')
+    print('\n')
+    print(sk_met.classification_report(y_train, y_pred))
+    print('\n')
+    print('cv scores: mean - {:0.2f} & std - {:0.2f} '.format(np.mean(cv_scores), np.std(cv_scores)))
+    print('\n')
+    print('confusion matrix: ')
+    print('\n')
+    print(sk_met.confusion_matrix(y_train, y_pred))
+    print('\n')
+    print('auc-roc: ')
+    print('\n')
+    fpr, tpr, _ = sk_met.roc_curve(y_train, y_pred_proba[:, 1])
+    auc = sk_met.roc_auc_score(y_train, y_pred)
+    plt.plot(fpr, tpr, label = "auc=" + str(np.round(auc, 2)))
+    plt.legend(loc = 4)
+    plt.show()
+    print('\n')
+    print("brier score: ", sk_met.brier_score_loss(y_train, y_pred)) # lower is better
+    
+def read_csv_sample(fpath, nrows, seed = 8, header = "-r"):
+    
+    sample = sp.getoutput('subsample -s {seed} -n {nrows} {fpath} {header}'\
+                          .format(seed = seed, nrows = nrows, fpath = fpath, header = header))
+    
+    # Remove the first line which is metadata
+    sample_cleaned = StringIO(sample[(sample.find("\n") + 1):])
+    
+    df = pd.read_csv(sample_cleaned, sep = ",")
+    
+    return(df)
+
+def feature_selection_classif(X, y, fs_type = "mdl"):   
+    
+    if fs_type == "mic":
+        fs_scores = sk_fs.mutual_info_classif(X, y)
+        fs_cols = [x[0] for x in list(zip(X_train.columns, fs_scores)) if x[1] > 0]
+    elif fs_type == "f_classif":
+        fs_scores = sk_fs.f_classif(X_train, y_train)
+        fs_cols = [x[0] for x in list(zip(X_train.columns, fs_scores[1])) if x[1] < .05]
+    else:
+        mdl = sk_fs.RFECV(sk_esb.RandomForestClassifier(), cv = 5, scoring = 'f1', n_jobs = -1)
+        mdl.fit(X, y)
+        fs_cols = X.columns[mdl.support_]
+
+    X_fs = X.loc[:, fs_cols]
+    
+    return(X_fs)
+
+
+def get_shap_values(model, X, y):
+
+    model.fit(X, y)
+    explainer = shap.TreeExplainer(model)
+    shap_values = explainer.shap_values(model)
+
+    # shap.summary_plot(shap_values, X_train) # all records explained
+    # shap.summary_plot(shap_values, X_train, plot_type = "bar") # shap mae for features across all records
+
+    df_shap = pd.DataFrame(list(zip(np.mean(shap_values, axis = 0), X.columns)),
+                           columns = ['shap_mean', 'feature'])
+    df_shap = df_shap[['feature', 'shap_mean']]
+    df_shap['shap_mean_abs'] = np.absolute(df_shap['shap_mean'])
+    df_shap.sort_values(['shap_mean_abs'], ascending = False, inplace = True)
+    
+    return(df_shap)
+    
+def auto_fe(df, agg = None, tran = None):
+    
+    aggs = ['mean', 'max', 'percent_true', 'last']
+    tran = ['subtract', 'divide']
+    
+    es = ft.EntitySet(id = "test")
+    es = es.entity_from_dataframe(entity_id = 'd', dataframe = df, make_index = True, index = 'ind')
+
+    fm, X_ft1 = ft.dfs(entityset = es, target_entity = 'd', agg_primitives = aggs, trans_primitives = tran)
+
+    _, X_ft2 = ft.dfs(entityset = es, target_entity = 'd', max_depth = 2)
+    
+    return(X_ft1)
+    
+ 
+def mdl_cv(model, X, y, cv = 5):
+    cv_scores = sk_ms.cross_val_score(model, X, y, cv = cv, n_jobs = -1)
+    return(cv_scores.mean(), cv_scores.std())
+    
+def build_ensemble(model_list):
+    
+    ensemble = mlx.classifier.StackingCVClassifier(classifiers = model_list[:-1],
+                                              use_probas = True, cv = 5, 
+                                              meta_classifier = model_list[-1])
+    
+    return(ensemble)
+
+def get_model_baselines(X, y, ml_type = 'classification'):
+    
+    ml_dict = {'classification': sk_lm.LogisticRegression(), 'regression':  sk_lm.LinearRegression()}
+    mdl = ml_dict[ml_type]
+    cv_scores = sk_ms.cross_val_score(mdl, X.values, y.values, cv = 5, n_jobs = -1)
+
+    return("Naive Baseline: ", y.value_counts(normalize = True).to_dict(), 
+           "Model Baseline (mu & sigma): ", cv_scores.mean(), cv_scores.std())
+
+def plot_learning_curve(model, X, y):    
+
+    folds = sk_ms.StratifiedKFold(5)
+    sizes = np.linspace(0.3, 1.0, 10)
+
+    viz = LearningCurve(model, cv = folds, train_sizes = sizes, scoring = 'accuracy', n_jobs = -1)
+    viz.fit(X, y)
+    viz.poof()
+
+def custom_metrics(y_true, y_pred, metrics_dict = {'accuracy': 0, 'recall': 0, 'precision': 0, 'f1': 0}):
+    
+    metrics_dict['accuracy'] = sk_met.accuracy_score(y_true, y_pred)
+    metrics_dict['f1'] = sk_met.f1_score(y_true, y_pred)
+    metrics_dict['recall'] = sk_met.recall_score(y_true, y_pred)
+    metrics_dict['precision'] = sk_met.precision_score(y_true, y_pred)
+        
+    return metrics_dict
+
+def custom_metrics_cv(clf, X, y, metrics_dict = {'accuracy': [], 'recall': [], 'precision': [], 'f1': []}):
+    
+    for metric in metrics_dict.keys():
+        cv_scores = sk_ms.cross_val_score(clf, X.values, y.values, scoring = 'f1', cv = 5, n_jobs = -1)
+        metrics_dict[metric] = [cv_scores.mean(), cv_scores.std()]
+        
+    return metrics_dict
+    
+custom_brier_scorer = sk_met.make_scorer(proba_score_proxy, greater_is_better = False, needs_proba = True, 
+                             class_idx = 1, proxied_func = sk_met.brier_score_loss)
+
+def proba_score_proxy(y_true, y_probs, class_idx, proxied_func, **kwargs):
+    return proxied_func(y_true, y_probs[:, class_idx], **kwargs)
+    
+def lstm_reshape(df, num_features = 1):
+    result = np.array(df).reshape((df.shape[0], df.shape[1], num_features))
+    return(result)
+
+def create_lstm_model(X, y, metric = ["accuracy"]):
+
+    mdl = Sequential() 
+
+    mdl.add(LSTM(units = 64, return_sequences = False, input_shape = (X.shape[1], 1))) 
+    mdl.add(Dropout(0.2))
+    # mdl.add(LSTM(units = 64, return_sequences = True)) 
+    # mdl.add(Dropout(0.2))
+    # mdl.add(LSTM(units = 64, return_sequences = True)) 
+    # mdl.add(Dropout(0.2))
+    # mdl.add(LSTM(units = 64))  
+    # mdl.add(Dropout(0.2))
+    mdl.add(Dense(units = 1))
+
+    mdl.compile(loss = "mean_squared_error", optimizer = "adam", metrics = metric)
+    history = mdl.fit(X, y, epochs = 10, batch_size = 1, validation_split = 0.2, verbose = 0)
+    
+    return([mdl, history])
+    
+ def get_data(server, un, pwd, driver, db, query):
+    """Connects to database and gets the data outlined by query as a dataframe."""
+    
+    con = pyodbc.connect('DRIVER=' + driver +
+                     ';PORT=1433;' 'SERVER=' + server +
+                     ';PORT=1443;' 'DATABASE=' + db +
+                     ';UID=' + un + ';PWD=' + pwd)
+                     
+    cursor = con.cursor()
+    cursor.execute(query)
+    cols = [column[0] for column in cursor.description]
+    data = [list(row) for row in cursor.fetchall()]
+    df = pd.DataFrame(data = data, columns = cols)
+
+    cursor.close()
+    con.close()
+    return(df)
+
+def set_data(server, un, pwd, driver, db, query, data):
+    """Connects to database and gets the data outlined by query as a dataframe."""
+    con = pyodbc.connect('DRIVER=' + DRIVER +
+                     ';PORT=1433;' 'SERVER=' + SERVER +
+                     ';PORT=1443;' 'DATABASE=' + DB +
+                     ';UID=' + USERNAME + ';PWD=' + PASSWORD)
+    cursor = con.cursor()
+    
+    #query ex: "insert into reference.{tbname}({c1}, {c2}, depth) values (%d, %d, %d)"
+    for val in data:
+        cursor.execute(insertion_query)
+        CXN.commit()
+
+    cursor.close()
+    con.close()
+    return 'Write Done'
+
+def lm_stats(X, y):
+
+  X = sm.add_constant(X) # adding a constant
+  mdl = sm.OLS(y, X).fit()
+  return(mdl)
 
 def keras_history(history, metric = "rmse"):
 
@@ -376,393 +776,4 @@ def get_date_time():
     * * A list contains two elements as strings: 1) date, and 2) time.
     '''
     return str(datetime.datetime.now()).split(' ')
-    
-def ols_with_diagnostics(df, formula = 'sepal_length ~ sepal_width'):
-    # https://medium.com/@emredjan/emulating-r-regression-plots-in-python-43741952c034
-    
-    model_fit = sm.ols(formula, data = df).fit()
 
-    # fitted values (need a constant term for intercept)
-    model_fitted_y = model_fit.fittedvalues
-
-    # model residuals
-    model_residuals = model_fit.resid
-
-    # normalized residuals
-    model_norm_residuals = model_fit.get_influence().resid_studentized_internal
-
-    # absolute squared normalized residuals
-    model_norm_residuals_abs_sqrt = np.sqrt(np.abs(model_norm_residuals))
-
-    # absolute residuals
-    model_abs_resid = np.abs(model_residuals)
-
-    # leverage, from statsmodels internals
-    model_leverage = model_fit.get_influence().hat_matrix_diag
-
-    # cook's distance, from statsmodels internals
-    model_cooks = model_fit.get_influence().cooks_distance[0]
-    
-    plot_lm_1 = plt.figure(1)
-    plot_lm_1.set_figheight(8)
-    plot_lm_1.set_figwidth(12)
-
-    plot_lm_1.axes[0] = sns.residplot(model_fitted_y, 'sepal_length', data=df, 
-                              lowess=True, 
-                              scatter_kws={'alpha': 0.5}, 
-                              line_kws={'color': 'red', 'lw': 1, 'alpha': 0.8})
-
-    plot_lm_1.axes[0].set_title('Residuals vs Fitted')
-    plot_lm_1.axes[0].set_xlabel('Fitted values')
-    plot_lm_1.axes[0].set_ylabel('Residuals')
-
-    # annotations
-    abs_resid = model_abs_resid.sort_values(ascending=False)
-    abs_resid_top_3 = abs_resid[:3]
-
-    for i in abs_resid_top_3.index:
-        plot_lm_1.axes[0].annotate(i, 
-                                   xy=(model_fitted_y[i], 
-                                       model_residuals[i]));
-        
-    QQ = ProbPlot(model_norm_residuals)
-    plot_lm_2 = QQ.qqplot(line='45', alpha=0.5, color='#4C72B0', lw=1)
-
-    plot_lm_2.set_figheight(8)
-    plot_lm_2.set_figwidth(12)
-
-    plot_lm_2.axes[0].set_title('Normal Q-Q')
-    plot_lm_2.axes[0].set_xlabel('Theoretical Quantiles')
-    plot_lm_2.axes[0].set_ylabel('Standardized Residuals');
-
-    # annotations
-    abs_norm_resid = np.flip(np.argsort(np.abs(model_norm_residuals)), 0)
-    abs_norm_resid_top_3 = abs_norm_resid[:3]
-
-    for r, i in enumerate(abs_norm_resid_top_3):
-        plot_lm_2.axes[0].annotate(i, 
-                                   xy=(np.flip(QQ.theoretical_quantiles, 0)[r],
-                                       model_norm_residuals[i]));
-        
-    plot_lm_3 = plt.figure(3)
-    plot_lm_3.set_figheight(8)
-    plot_lm_3.set_figwidth(12)
-
-    plt.scatter(model_fitted_y, model_norm_residuals_abs_sqrt, alpha=0.5)
-    sns.regplot(model_fitted_y, model_norm_residuals_abs_sqrt, 
-                scatter=False, 
-                ci=False, 
-                lowess=True,
-                line_kws={'color': 'red', 'lw': 1, 'alpha': 0.8})
-
-    plot_lm_3.axes[0].set_title('Scale-Location')
-    plot_lm_3.axes[0].set_xlabel('Fitted values')
-    plot_lm_3.axes[0].set_ylabel('$\sqrt{|Standardized Residuals|}$');
-
-    # annotations
-    abs_sq_norm_resid = np.flip(np.argsort(model_norm_residuals_abs_sqrt), 0)
-    abs_sq_norm_resid_top_3 = abs_sq_norm_resid[:3]
-
-    for i in abs_norm_resid_top_3:
-        plot_lm_3.axes[0].annotate(i, 
-                                   xy=(model_fitted_y[i], 
-                                       model_norm_residuals_abs_sqrt[i]));
-        
-    plot_lm_4 = plt.figure(4)
-    plot_lm_4.set_figheight(8)
-    plot_lm_4.set_figwidth(12)
-
-    plt.scatter(model_leverage, model_norm_residuals, alpha=0.5)
-    sns.regplot(model_leverage, model_norm_residuals, 
-                scatter=False, 
-                ci=False, 
-                lowess=True,
-                line_kws={'color': 'red', 'lw': 1, 'alpha': 0.8})
-
-    plot_lm_4.axes[0].set_xlim(0, 0.20)
-    plot_lm_4.axes[0].set_ylim(-3, 5)
-    plot_lm_4.axes[0].set_title('Residuals vs Leverage')
-    plot_lm_4.axes[0].set_xlabel('Leverage')
-    plot_lm_4.axes[0].set_ylabel('Standardized Residuals')
-
-    # annotations
-    leverage_top_3 = np.flip(np.argsort(model_cooks), 0)[:3]
-
-    for i in leverage_top_3:
-        plot_lm_4.axes[0].annotate(i, 
-                                   xy=(model_leverage[i], 
-                                       model_norm_residuals[i]))
-
-    # shenanigans for cook's distance contours
-    def graph(formula, x_range, label=None):
-        x = x_range
-        y = formula(x)
-        plt.plot(x, y, label=label, lw=1, ls='--', color='red')
-
-    p = len(model_fit.params) # number of model parameters
-
-    graph(lambda x: np.sqrt((0.5 * p * (1 - x)) / x), 
-          np.linspace(0.001, 0.200, 50), 
-          'Cook\'s distance') # 0.5 line
-    graph(lambda x: np.sqrt((1 * p * (1 - x)) / x), 
-          np.linspace(0.001, 0.200, 50)) # 1 line
-    plt.legend(loc='upper right');
-    
-    return('Done')
-
-
-def classification_status(y_train, y_pred, y_pred_proba, cv_scores):
-    print('classification report: ')
-    print('\n')
-    print(sk_met.classification_report(y_train, y_pred))
-    print('\n')
-    print('cv scores: mean - {:0.2f} & std - {:0.2f} '.format(np.mean(cv_scores), np.std(cv_scores)))
-    print('\n')
-    print('confusion matrix: ')
-    print('\n')
-    print(sk_met.confusion_matrix(y_train, y_pred))
-    print('\n')
-    print('auc-roc: ')
-    print('\n')
-    fpr, tpr, _ = sk_met.roc_curve(y_train, y_pred_proba[:, 1])
-    auc = sk_met.roc_auc_score(y_train, y_pred)
-    plt.plot(fpr, tpr, label = "auc=" + str(np.round(auc, 2)))
-    plt.legend(loc = 4)
-    plt.show()
-    print('\n')
-    print("brier score: ", sk_met.brier_score_loss(y_train, y_pred)) # lower is better
-    
-## Borrowed from the pyjanitor
-
-def clean_names(df):
-
-    def convert(name):
-        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', name)
-        return re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
-    
-    df = df.rename(
-        columns = lambda x: x.replace(" ", "_")
-        .replace("/", "_")
-        .replace(":", "_")
-        .replace("'", "")
-        .replace("’", "")
-        .replace(",", "_")
-        .replace("?", "_")
-        .replace("-", "_")
-        .replace("(", "_")
-        .replace(")", "_")
-        .replace(".", "_")
-    )\
-    .rename(columns= lambda x: convert(x))\
-    .rename(columns = lambda x: re.sub("_+", "_", x))
-    return df
-    
-    
-def get_types_na_count(df):
-  result = pd.concat([df.dtypes, df.isnull().sum()], axis = 1)
-  result.columns = ["type", "na_count"]
-  return(result)
-
-def get_rules(df):
-    
-    frequent_itemsets = apriori(df, min_support = 0.07, use_colnames = True)
-    rules = association_rules(frequent_itemsets, metric = "lift", min_threshold = 1)
-    results = rules.loc[(rules['consequents'] == rules.consequents.unique()[0]),
-                            ['antecedents', 'consequents', 'lift', 'confidence']] \
-                   .sort_values(['lift', 'confidence'], ascending = [False, False])
-    
-    return(results)
-
-def classification_status(y_train, y_pred, y_pred_proba, cv_scores):
-    print('classification report: ')
-    print('\n')
-    print(sk_met.classification_report(y_train, y_pred))
-    print('\n')
-    print('cv scores: mean - {:0.2f} & std - {:0.2f} '.format(np.mean(cv_scores), np.std(cv_scores)))
-    print('\n')
-    print('confusion matrix: ')
-    print('\n')
-    print(sk_met.confusion_matrix(y_train, y_pred))
-    print('\n')
-    print('auc-roc: ')
-    print('\n')
-    fpr, tpr, _ = sk_met.roc_curve(y_train, y_pred_proba[:, 1])
-    auc = sk_met.roc_auc_score(y_train, y_pred)
-    plt.plot(fpr, tpr, label = "auc=" + str(np.round(auc, 2)))
-    plt.legend(loc = 4)
-    plt.show()
-    print('\n')
-    print("brier score: ", sk_met.brier_score_loss(y_train, y_pred)) # lower is better
-    
-def read_csv_sample(fpath, nrows, seed = 8, header = "-r"):
-    
-    sample = sp.getoutput('subsample -s {seed} -n {nrows} {fpath} {header}'\
-                          .format(seed = seed, nrows = nrows, fpath = fpath, header = header))
-    
-    # Remove the first line which is metadata
-    sample_cleaned = StringIO(sample[(sample.find("\n") + 1):])
-    
-    df = pd.read_csv(sample_cleaned, sep = ",")
-    
-    return(df)
-
-def feature_selection_classif(X, y, fs_type = "mdl"):   
-    
-    if fs_type == "mic":
-        fs_scores = sk_fs.mutual_info_classif(X, y)
-        fs_cols = [x[0] for x in list(zip(X_train.columns, fs_scores)) if x[1] > 0]
-    elif fs_type == "f_classif":
-        fs_scores = sk_fs.f_classif(X_train, y_train)
-        fs_cols = [x[0] for x in list(zip(X_train.columns, fs_scores[1])) if x[1] < .05]
-    else:
-        mdl = sk_fs.RFECV(sk_esb.RandomForestClassifier(), cv = 5, scoring = 'f1', n_jobs = -1)
-        mdl.fit(X, y)
-        fs_cols = X.columns[mdl.support_]
-
-    X_fs = X.loc[:, fs_cols]
-    
-    return(X_fs)
-
-
-def get_shap_values(model, X, y):
-
-    model.fit(X, y)
-    explainer = shap.TreeExplainer(model)
-    shap_values = explainer.shap_values(model)
-
-    # shap.summary_plot(shap_values, X_train) # all records explained
-    # shap.summary_plot(shap_values, X_train, plot_type = "bar") # shap mae for features across all records
-
-    df_shap = pd.DataFrame(list(zip(np.mean(shap_values, axis = 0), X.columns)),
-                           columns = ['shap_mean', 'feature'])
-    df_shap = df_shap[['feature', 'shap_mean']]
-    df_shap['shap_mean_abs'] = np.absolute(df_shap['shap_mean'])
-    df_shap.sort_values(['shap_mean_abs'], ascending = False, inplace = True)
-    
-    return(df_shap)
-    
-def auto_fe(df, agg = None, tran = None):
-    
-    aggs = ['mean', 'max', 'percent_true', 'last']
-    tran = ['subtract', 'divide']
-    
-    es = ft.EntitySet(id = "test")
-    es = es.entity_from_dataframe(entity_id = 'd', dataframe = df, make_index = True, index = 'ind')
-
-    fm, X_ft1 = ft.dfs(entityset = es, target_entity = 'd', agg_primitives = aggs, trans_primitives = tran)
-
-    _, X_ft2 = ft.dfs(entityset = es, target_entity = 'd', max_depth = 2)
-    
-    return(X_ft1)
-    
- 
-def mdl_cv(model, X, y, cv = 5):
-    cv_scores = sk_ms.cross_val_score(model, X, y, cv = cv, n_jobs = -1)
-    return(cv_scores.mean(), cv_scores.std())
-    
-def build_ensemble(model_list):
-    
-    ensemble = mlx.classifier.StackingCVClassifier(classifiers = model_list[:-1],
-                                              use_probas = True, cv = 5, 
-                                              meta_classifier = model_list[-1])
-    
-    return(ensemble)
-
-def get_model_baselines(X, y, ml_type = 'classification'):
-    
-    ml_dict = {'classification': sk_lm.LogisticRegression(), 'regression':  sk_lm.LinearRegression()}
-    mdl = ml_dict[ml_type]
-    cv_scores = sk_ms.cross_val_score(mdl, X.values, y.values, cv = 5, n_jobs = -1)
-
-    return("Naive Baseline: ", y.value_counts(normalize = True).to_dict(), 
-           "Model Baseline (mu & sigma): ", cv_scores.mean(), cv_scores.std())
-
-def plot_learning_curve(model, X, y):    
-
-    folds = sk_ms.StratifiedKFold(5)
-    sizes = np.linspace(0.3, 1.0, 10)
-
-    viz = LearningCurve(model, cv = folds, train_sizes = sizes, scoring = 'accuracy', n_jobs = -1)
-    viz.fit(X, y)
-    viz.poof()
-
-def custom_metrics(y_true, y_pred, metrics_dict = {'accuracy': 0, 'recall': 0, 'precision': 0, 'f1': 0}):
-    
-    metrics_dict['accuracy'] = sk_met.accuracy_score(y_true, y_pred)
-    metrics_dict['f1'] = sk_met.f1_score(y_true, y_pred)
-    metrics_dict['recall'] = sk_met.recall_score(y_true, y_pred)
-    metrics_dict['precision'] = sk_met.precision_score(y_true, y_pred)
-        
-    return metrics_dict
-
-def custom_metrics_cv(clf, X, y, metrics_dict = {'accuracy': [], 'recall': [], 'precision': [], 'f1': []}):
-    
-    for metric in metrics_dict.keys():
-        cv_scores = sk_ms.cross_val_score(clf, X.values, y.values, scoring = 'f1', cv = 5, n_jobs = -1)
-        metrics_dict[metric] = [cv_scores.mean(), cv_scores.std()]
-        
-    return metrics_dict
-    
-custom_brier_scorer = sk_met.make_scorer(proba_score_proxy, greater_is_better = False, needs_proba = True, 
-                             class_idx = 1, proxied_func = sk_met.brier_score_loss)
-
-def proba_score_proxy(y_true, y_probs, class_idx, proxied_func, **kwargs):
-    return proxied_func(y_true, y_probs[:, class_idx], **kwargs)
-    
-def lstm_reshape(df, num_features = 1):
-    result = np.array(df).reshape((df.shape[0], df.shape[1], num_features))
-    return(result)
-
-def create_lstm_model(X, y, metric = ["accuracy"]):
-
-    mdl = Sequential() 
-
-    mdl.add(LSTM(units = 64, return_sequences = False, input_shape = (X.shape[1], 1))) 
-    mdl.add(Dropout(0.2))
-    # mdl.add(LSTM(units = 64, return_sequences = True)) 
-    # mdl.add(Dropout(0.2))
-    # mdl.add(LSTM(units = 64, return_sequences = True)) 
-    # mdl.add(Dropout(0.2))
-    # mdl.add(LSTM(units = 64))  
-    # mdl.add(Dropout(0.2))
-    mdl.add(Dense(units = 1))
-
-    mdl.compile(loss = "mean_squared_error", optimizer = "adam", metrics = metric)
-    history = mdl.fit(X, y, epochs = 10, batch_size = 1, validation_split = 0.2, verbose = 0)
-    
-    return([mdl, history])
-    
- def get_data(server, un, pwd, driver, db, query):
-    """Connects to database and gets the data outlined by query as a dataframe."""
-    
-    con = pyodbc.connect('DRIVER=' + driver +
-                     ';PORT=1433;' 'SERVER=' + server +
-                     ';PORT=1443;' 'DATABASE=' + db +
-                     ';UID=' + un + ';PWD=' + pwd)
-                     
-    cursor = con.cursor()
-    cursor.execute(query)
-    cols = [column[0] for column in cursor.description]
-    data = [list(row) for row in cursor.fetchall()]
-    df = pd.DataFrame(data = data, columns = cols)
-
-    cursor.close()
-    con.close()
-    return(df)
-
-def set_data(server, un, pwd, driver, db, query, data):
-    """Connects to database and gets the data outlined by query as a dataframe."""
-    con = pyodbc.connect('DRIVER=' + DRIVER +
-                     ';PORT=1433;' 'SERVER=' + SERVER +
-                     ';PORT=1443;' 'DATABASE=' + DB +
-                     ';UID=' + USERNAME + ';PWD=' + PASSWORD)
-    cursor = con.cursor()
-    
-    #query ex: "insert into reference.{tbname}({c1}, {c2}, depth) values (%d, %d, %d)"
-    for val in data:
-        cursor.execute(insertion_query)
-        CXN.commit()
-
-    cursor.close()
-    con.close()
-    return 'Write Done'
