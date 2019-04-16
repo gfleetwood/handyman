@@ -1,6 +1,7 @@
 import importlib
+import pickle
 
-def pydata(libs = None, verbose = False):
+def pydata(libs = None, use_predefined = None, verbose = False):
 
     '''
     Role
@@ -19,12 +20,14 @@ def pydata(libs = None, verbose = False):
     2) cat_summary: A pandas dataframe with a summary of the categorical variables
     '''
 
-    if libs is None: 
+    if libs is None and pre_defined is None: 
     
-        libs = [
-    ['pd', 'pandas'], ['sk', 'sklearn'], ['np', 'numpy'], ['pn', 'plotnine'], ['plt', 'matplotlib.pyplot'],
-    ['lz', 'logzero'], ['pandasql', 'pandasql'],
-    ]
+        libs = [['pd', 'pandas'], ['sk_lm', 'sklearn.linear_model'], ['np', 'numpy'], ['pn', 'plotnine'],
+                ['plt', 'matplotlib.pyplot'], ['lz', 'logzero']]
+    
+    if pre_defined is not None:
+        with open(pre_defined, "rb") as fp:   # Unpickling
+            libs = pickle.load(fp)
   
   imported_libs = {lib[0]: importlib.import_module(lib[1]) for lib in libs}
   
