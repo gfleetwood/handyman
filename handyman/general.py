@@ -1,3 +1,40 @@
+import importlib
+
+def pydata(libs = None, verbose = False):
+
+    '''
+    Role
+    ----
+    globals().update(pydata())
+  
+    Parameters
+    ---------
+    * df: A pandas dataframe
+    * num_cols: A list of the numeric column names
+    * cat_cols: A list of the categorical column names
+  
+    Returns
+    -------
+    * smry: A list containing: 1) num_summary: A pandas dataframe with a summary of the numeric variables, and 
+    2) cat_summary: A pandas dataframe with a summary of the categorical variables
+    '''
+
+    if libs is None: 
+    
+        libs = [
+    ['pd', 'pandas'], ['sk', 'sklearn'], ['np', 'numpy'], ['pn', 'plotnine'], ['plt', 'matplotlib.pyplot'],
+    ['lz', 'logzero'], ['pandasql', 'pandasql'],
+    ]
+  
+  imported_libs = {lib[0]: importlib.import_module(lib[1]) for lib in libs}
+  
+  if verbose:  
+    for lib in libs: 
+        print(lib[1] + " loaded as " + lib[0])
+  
+  return imported_libs
+
+
 def exclusion(x,y): 
     '''
     Role
