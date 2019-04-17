@@ -395,7 +395,7 @@ def build_ensemble(model_list):
     
     return(ensemble)
 
-def get_model_baselines(X, y, ml_type = 'classification'):
+def get_baselines(X, y, ml_type = 'classification'):
 
     '''
     Role
@@ -412,11 +412,13 @@ def get_model_baselines(X, y, ml_type = 'classification'):
     * fi_sorted: A sorted lists of feature names and their importance as per model_rf.
     '''
     
-    ml_dict = {'classification': sk_lm.LogisticRegression(), 'regression':  sk_lm.LinearRegression()}
+    ml_dict = {'classification': [sk_lm.LogisticRegression()], 'regression':  [sk_lm.LinearRegression()]}
     mdl = ml_dict[ml_type]
     cv_scores = sk_ms.cross_val_score(mdl, X.values, y.values, cv = 5, n_jobs = -1)
+    
+    target_baseline = [y.value_counts(normalize = True).to_dict() if type = "classification" else y.mean()]
 
-    return("Naive Baseline: ", y.value_counts(normalize = True).to_dict(), 
+    return("Naive Baseline: ", target_baseline, 
            "Model Baseline (mu & sigma): ", cv_scores.mean(), cv_scores.std())
 
 def plot_learning_curve(model, X, y):    
