@@ -1,102 +1,47 @@
 import importlib
 import pickle
+import pandas as pd
+import datetime
 
-def pydata(libs = None, use_predefined = None, verbose = False):
-
+def pydata(libs = None, verbose = True):
     '''
-    Role
-    ----
-    globals().update(pydata())
-  
-    Parameters
-    ---------
-    * df: A pandas dataframe
-    * num_cols: A list of the numeric column names
-    * cat_cols: A list of the categorical column names
-  
-    Returns
-    -------
-    * smry: A list containing: 1) num_summary: A pandas dataframe with a summary of the numeric variables, and 
-    2) cat_summary: A pandas dataframe with a summary of the categorical variables
+    @description Import multiple libraries at once. Call: globals().update(pydata())
+    @param libs A list of lists containing libraries to be imported and their aliases
+    @param verbose A boolean indicator of whether or not to print the names of the imported libraries
+    @return An object to add to the globals() object
     '''
-
-    if libs is None and pre_defined is None: 
+    if libs is None: 
     
-        libs = [['pd', 'pandas'], ['sk_lm', 'sklearn.linear_model'], ['np', 'numpy'], ['pn', 'plotnine'],
-                ['plt', 'matplotlib.pyplot'], ['lz', 'logzero']]
+        libs = [['pd', 'pandas'], ['sk_lm', 'sklearn.linear_model'], ['np', 'numpy'],
+                ['pn', 'plotnine'], ['plt', 'matplotlib.pyplot'], ['lz', 'logzero']]
+  
+    imported_libs = {lib[0]: importlib.import_module(lib[1]) for lib in libs}
     
-    if pre_defined is not None:
-        with open(pre_defined, "rb") as fp:   # Unpickling
-            libs = pickle.load(fp)
-  
-  imported_libs = {lib[0]: importlib.import_module(lib[1]) for lib in libs}
-  
-  if verbose:  
-    for lib in libs: 
-        print(lib[1] + " loaded as " + lib[0])
-  
-  return imported_libs
-
-
-def exclusion(x,y): 
-    '''
-    Role
-    ----
-    Takes a dataframe, and lists of its numeric and categorical variables. Returns a summary for each.
-  
-    Parameters
-    ---------
-    * df: A pandas dataframe
-    * num_cols: A list of the numeric column names
-    * cat_cols: A list of the categorical column names
-  
-    Returns
-    -------
-    * smry: A list containing: 1) num_summary: A pandas dataframe with a summary of the numeric variables, and 
-    2) cat_summary: A pandas dataframe with a summary of the categorical variables
-    '''
-
-    result = lambda x,y: [j for i,j in enumerate(x) if i != y]
-    return(result)
+    if verbose:  
+        for lib in libs: 
+            print(lib[1] + " loaded as " + lib[0])
+    
+    return imported_libs
     
 def get_types_na_count(df):
     '''
-    Role
-    ----
-    Takes a dataframe, and lists of its numeric and categorical variables. Returns a summary for each.
-  
-    Parameters
-    ---------
-    * df: A pandas dataframe
-    * num_cols: A list of the numeric column names
-    * cat_cols: A list of the categorical column names
-  
-    Returns
-    -------
-    * smry: A list containing: 1) num_summary: A pandas dataframe with a summary of the numeric variables, and 
-    2) cat_summary: A pandas dataframe with a summary of the categorical variables
+    @description Returns columns types and NA counts for them
+    @param df A dataframe
+    @return A dataframe of columns types and NA counts for them
     '''
-  result = pd.concat([df.dtypes, df.isnull().sum()], axis = 1)
-  result.columns = ["type", "na_count"]
-  return(result)
+    result = pd.concat([df.dtypes, df.isnull().sum()], axis = 1)
+    result.columns = ["type", "na_count"]
+
+    return(result)
   
   
 def data_diagnostics(df, num_cols, cat_cols):
     '''
-    Role
-    ----
-    Takes a dataframe, and lists of its numeric and categorical variables. Returns a summary for each.
-  
-    Parameters
-    ---------
-    * df: A pandas dataframe
-    * num_cols: A list of the numeric column names
-    * cat_cols: A list of the categorical column names
-  
-    Returns
-    -------
-    * smry: A list containing: 1) num_summary: A pandas dataframe with a summary of the numeric variables, and 
-    2) cat_summary: A pandas dataframe with a summary of the categorical variables
+    @description Constructs a combined numerical and categorical summary for a dataframe
+    @param df A dataframe
+    @param num_cols A list of numeric columns
+    @param cat_cols A list of categorical columns
+    @return A dataframe of columns types and NA counts for them
     '''
 
     # Numerical summary
@@ -128,24 +73,16 @@ def data_diagnostics(df, num_cols, cat_cols):
         for col in cat_cols
               ]
     
-    smry = [num_summary_full, cat_summary]
+    result = [num_summary_full, cat_summary]
 
-    return (smry)
+    return(result)
 
 
 def flatten_dict(y):  
     '''
-    Role
-    ----
-    Flatten an arbitrarily nested dictionary.
-    
-    Parameters
-    ---------
-    * y: A dictionary
-  
-    Returns
-    -------    
-    * out: A flattened version of y. 
+    @description Flatten an arbitrarily nested dictionary.
+    @param y A dictionary
+    @return A flattened version of y 
     '''
     out = {}
 
@@ -166,17 +103,8 @@ def flatten_dict(y):
     
 def get_date_time():  
     '''
-    Role
-    ----
-    Returns the system date and time as a string.
-  
-    Parameters
-    ---------
-    * None 
-  
-    Returns
-    -------
-    * * A list contains two elements as strings: 1) date, and 2) time.
+    @description Returns the system date and time as a string.
+    @return The date in ISO-8601 
     '''
     return str(datetime.datetime.now()).split(' ')
 

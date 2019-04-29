@@ -1,5 +1,7 @@
 from skopt.space import Real, Integer, Categorical
 
+# Sample grids for hyperparameter tuning
+
 grid_rf = {
 'bootstrap': [True, False], 'max_features': ['auto', 'sqrt'],
 'max_depth': [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, None],
