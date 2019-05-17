@@ -80,7 +80,7 @@ def data_diagnostics(df, num_cols, cat_cols):
 
 def flatten_dict(y):  
     '''
-    @description Flatten an arbitrarily nested dictionary.
+    @description Flatten an arbitrarily nested dictionary. Source: https://towardsdatascience.com/flattening-json-objects-in-python-f5343c794b10
     @param y A dictionary
     @return A flattened version of y 
     '''
