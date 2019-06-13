@@ -14,6 +14,31 @@ def process_param(key_val):
         val = list([val])
     
     return((key, val))
+    
+def subset_by_iqr(df, column, whisker_width = 1.5):
+    
+    q1 = df[column].quantile(0.25)                 
+    q3 = df[column].quantile(0.75)
+    iqr = q3 - q1
+    
+    mask = (df[column] >= q1 - whisker_width*iqr) & (df[column] <= q3 + whisker_width*iqr)
+    
+    return df.loc[mask]
+    
+def generate_params(mdl, scale = "small"):
+    
+    params = {}
+    
+    for key, val in mdl.get_params().items(): 
+        
+        if isinstance(mdl.get_params()[key], bool):
+            params[key] = random.choice([False, True])
+        elif key == 'n_jobs':
+            params[key] = -1            
+        else:
+            params[key] = val
+    
+    return(params)
 
 def generate_grid_default(mdl):
     
@@ -38,14 +63,3 @@ def tuner(mdl, X, y, grid, seed):
     
     return({"best_model": mdl_tuner.best_estimator_, "best_score": score})
 
-def run_cv(mdl, X, y,metric):
-    cv_scores = sk_ms.cross_val_score(mdl, X, y, cv = 5, n_jobs = -1, scoring = metric)
-    return({"scores_mean": np.sqrt(cv_scores.mean()), "scores_sd": cv_scores.std()})
-
-def get_baseline_regress(X, y):
-    
-    mdl = sk_lm.LinearRegression()
-    cv_scores = sk_ms.cross_val_score(mdl, X, y, cv = 5, scoring = "neg_mean_squared_error", n_jobs = -1)
-    print("Naive Baseline: ", y.std(), 
-          "Naive Model Baseline(mu, sigma): ", np.sqrt(-1*cv_scores.mean()), cv_scores.std())
-    return("Done")

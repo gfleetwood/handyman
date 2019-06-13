@@ -2,6 +2,9 @@ from skopt.space import Real, Integer, Categorical
 
 # Sample grids for hyperparameter tuning
 
+grid_kknr = {'leaf_size': [30, 40, 50, 60, 70, 80, 90], 
+             'n_neighbors': [5, 15, 25, 35, 45, 55, 65, 75, 85]}
+
 grid_rf = {
 'bootstrap': [True, False], 'max_features': ['auto', 'sqrt'],
 'max_depth': [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, None],
