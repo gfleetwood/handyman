@@ -1,3 +1,24 @@
+# Skeleton For Nested CV
+
+model = sk_lm.LogisticRegression()
+grid = None
+mdl = sk_ms.RandomSearchCV(estimator = mdl, param_grid = grid, cv = 5) if grid is not None else model
+training_scores = sk_ms.cross_val_score(mdl, X_train, y_train, cv = 5)
+results = (training_scores.mean(), training_scores.std())
+
+def adverserial_validation(X1, X2):
+
+    df_av = pd.concat([X2.assign(test = 1), X1.assign(test = 0)], axis = 0)
+    mdl_av = sk_lm.LogisticRegression()
+    training_scores_av = sk_ms.cross_val_score(mdl_av, 
+                                               df_av.drop(['test'], axis = 1),
+                                               df_av.test.values, 
+                                               cv = 5, 
+                                               scoring = 'roc_auc')
+    results = (training_scores_av.mean(), training_scores.std())
+    
+    return(results)
+
 def process_param(key_val):
     
     key_val_li = list(key_val)
@@ -47,19 +68,38 @@ def generate_grid_default(mdl):
     
     return(grid)
 
-def tuner(mdl, X, y, grid, seed):
-    
-    mdl_tuner = sk_ms.RandomizedSearchCV(estimator = mdl,
-                                         cv = 5, 
-                                         param_distributions = grid, 
-                                         scoring = 'neg_mean_squared_error', 
-                                         n_jobs = -1, 
-                                         n_iter = 100, 
-                                         verbose = 0, 
-                                         refit = True, 
-                                         random_state = seed)    
-    mdl_tuner.fit(X, y)
-    score = mdl_tuner.best_estimator_.score(X, y)
-    
-    return({"best_model": mdl_tuner.best_estimator_, "best_score": score})
+def train(mdl, X, y, metric = None, method = 'cv', grid = None, seed = 8):
+if method == 'cv':
+  cv_scores = sk_ms.cross_val_score(mdl, 
+                                    X, 
+                                    y, 
+                                    cv = 5,
+                                    n_jobs = -1,
+                                    scoring = metric)
+  
+  mu = (np.sqrt(-1*cv_scores.mean()) 
+        if metric == 'neg_mean_squared_error' 
+        else cv_scores.mean())
+  sd = cv_scores.std()
+  results = {"scores_mu": mu, "scores_sd": sd}
+elif method == 'tune':
+  mdl_tuner = sk_ms.RandomizedSearchCV(estimator = mdl,
+                                       cv = 5, 
+                                       param_distributions = grid, 
+                                       scoring = metric, 
+                                       n_jobs = -1, 
+                                       n_iter = 100, 
+                                       verbose = 0, 
+                                       refit = True, 
+                                       random_state = seed)    
+  mdl_tuner.fit(X, y)
+  score = np.sqrt(-1*mdl_tuner.best_score_)
+  score = (np.sqrt(-1*mdl_tuner.best_score_) 
+           if metric == 'neg_mean_squared_error' 
+           else mdl_tuner.best_score_)
+  results = {"best_model": mdl_tuner.best_estimator_, "best_score": score}
+else:
+    return("Invalid method selected!")
+
+return(results)
 
