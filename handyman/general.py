@@ -2,26 +2,26 @@ import importlib
 import pickle
 import pandas as pd
 import datetime
+import cProfile, pstats, io
 
-def pydata(libs = None, verbose = True):
-    '''
-    @description Import multiple libraries at once. Call: globals().update(pydata())
-    @param libs A list of lists containing libraries to be imported and their aliases
-    @param verbose A boolean indicator of whether or not to print the names of the imported libraries
-    @return An object to add to the globals() object
-    '''
-    if libs is None: 
+def profile(fnc):
     
-        libs = [['pd', 'pandas'], ['sk_lm', 'sklearn.linear_model'], ['np', 'numpy'],
-                ['pn', 'plotnine'], ['plt', 'matplotlib.pyplot'], ['lz', 'logzero']]
-  
-    imported_libs = {lib[0]: importlib.import_module(lib[1]) for lib in libs}
+    """A decorator that uses cProfile to profile a function: https://osf.io/upav8/"""
     
-    if verbose:  
-        for lib in libs: 
-            print(lib[1] + " loaded as " + lib[0])
-    
-    return imported_libs
+    def inner(*args, **kwargs):
+        
+        pr = cProfile.Profile()
+        pr.enable()
+        retval = fnc(*args, **kwargs)
+        pr.disable()
+        s = io.StringIO()
+        sortby = 'cumulative'
+        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps.print_stats()
+        print(s.getvalue())
+        return retval
+
+    return inner
     
 def get_types_na_count(df):
     '''
