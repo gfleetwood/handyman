@@ -1,10 +1,15 @@
-# Skeleton For Nested CV
+def substr_overlap(s, n):
+    
+    result = [s[i:(i+n)] for i in range(len(s) - (n - 1))]
+    
+    return(result)
 
-model = sk_lm.LogisticRegression()
-grid = None
-mdl = sk_ms.RandomSearchCV(estimator = mdl, param_grid = grid, cv = 5) if grid is not None else model
-training_scores = sk_ms.cross_val_score(mdl, X_train, y_train, cv = 5)
-results = (training_scores.mean(), training_scores.std())
+def substr_distinct(s, n):
+    
+    r = list(range(0, len(s) + 1, n))
+    result = [s[r[i]:r[(i+1)]] for i, _ in enumerate(r[:-1])] + [s[r[-1]:]]
+    
+    return(result)
 
 def adverserial_validation(X1, X2):
 

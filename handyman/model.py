@@ -271,22 +271,6 @@ def build_ensemble(model_list):
     
     return(ensemble)
 
-def get_baselines(X, y, ml_type = 'classification'):
-    '''
-    @description A wrapper for getting a naive baseline and a simple model baseline for modeling.
-    @param X The feature dataframe
-    @param y The target
-    @param ml_type Use "classification" for Logistic Regression and "regression" for Linear Regression
-    @return A dictionary of the naive baseline and the naive model baseline
-    '''    
-    ml_dict = {'classification': [sk_lm.LogisticRegression()], 'regression':  [sk_lm.LinearRegression()]}
-    mdl = ml_dict[ml_type]
-    cv_scores = sk_ms.cross_val_score(mdl, X.values, y.values, cv = 5, n_jobs = -1)
-    target_baseline = y.value_counts(normalize = True).to_dict() if type = "classification" else y.mean()
-
-    return({"Naive Baseline: ", target_baseline, 
-           "Model Baseline (mu & sigma): ", cv_scores.mean(), cv_scores.std()})
-
 def plot_learning_curve(model, X, y):    
     '''
     @description A wrapper for plotting a learning curve
