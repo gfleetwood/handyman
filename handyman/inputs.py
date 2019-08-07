@@ -20,7 +20,16 @@ def read_csv_sample(fpath, nrows, seed = 8, header = "-r"):
     
     return(df)
     
-def get_data(server, un, pwd, driver, db, query):
+def create_con(server, un, pwd, driver, db):
+
+    con = pyodbc.connect('DRIVER=' + driver +
+                     ';PORT=1433;' 'SERVER=' + server +
+                     ';PORT=1443;' 'DATABASE=' + db +
+                     ';UID=' + un + ';PWD=' + pwd)
+                     
+    return(con)
+    
+def get_data(con, query):
     '''
     @description Runs a SQL query and returns the results
     @param server The server of the database
@@ -31,22 +40,20 @@ def get_data(server, un, pwd, driver, db, query):
     @param query The query to run
     @return A dataframe of the query results
     '''    
-    con = pyodbc.connect('DRIVER=' + driver +
-                     ';PORT=1433;' 'SERVER=' + server +
-                     ';PORT=1443;' 'DATABASE=' + db +
-                     ';UID=' + un + ';PWD=' + pwd)
-                     
-    cursor = con.cursor()
-    cursor.execute(query)
-    cols = [column[0] for column in cursor.description]
-    data = [list(row) for row in cursor.fetchall()]
-    df = pd.DataFrame(data = data, columns = cols)
+       
+    #cursor = con.cursor()
+    #cursor.execute(query)
+    #cols = [column[0] for column in cursor.description]
+    #data = [list(row) for row in cursor.fetchall()]
+    #df = pd.DataFrame(data = data, columns = cols)
+    #cursor.close()
+    #con.close()
+    
+    result = pd.read_sql_query(query,con)
+    
+    return(result)
 
-    cursor.close()
-    con.close()
-    return(df)
-
-def set_data(server, un, pwd, driver, db, query, data):
+def set_data(con, df, tbl_name):
     '''
     @description Runs a SQL query and returns the results
     query ex: "insert into reference.{tbname}({c1}, {c2}, depth) values (%d, %d, %d)
@@ -59,17 +66,15 @@ def set_data(server, un, pwd, driver, db, query, data):
     @param data The data to insert
     @return A confirmation message
     '''
-    con = pyodbc.connect('DRIVER=' + driver +
-                     ';PORT=1433;' 'SERVER=' + server +
-                     ';PORT=1443;' 'DATABASE=' + db +
-                     ';UID=' + un + ';PWD=' + pwd)
-    cursor = con.cursor()
+ 
+    #cursor = con.cursor()
     
-    for val in data:
-        cursor.execute(query.format(val))
-        con.commit()
-
-    cursor.close()
-    con.close()
-
+    #for val in data:
+    #    cursor.execute(query.format(val))
+    #    con.commit()
+    #cursor.close()
+    #con.close()
+   
+    df.to_sql(tbl_name, con)
+     
     return('Write Done')

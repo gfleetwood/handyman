@@ -108,3 +108,51 @@ else:
 
 return(results)
 
+def extract_dict_from_str(string):
+
+    x = ast.literal_eval(re.search('({.+})', string).group(0))
+    
+    return(x)
+
+def get_shap_exp_vals(mdl, X, y):
+    
+    mdl.fit(X.values, y.values)
+    explainer = shap.TreeExplainer(test, model_output = "probability")
+    shap_values = explainer.shap_values(X.values)
+    
+    return((explainer, shap_values))  
+
+def get_shap_df(shap_values, X):
+    
+    df_shap = pd.DataFrame(
+        list(zip(np.mean(shap_values, axis = 0), X.columns)),
+        columns = ['shap_mean', 'feature'])
+    df_shap = df_shap[['feature', 'shap_mean']]
+    df_shap['shap_mean_abs'] = np.absolute(df_shap['shap_mean'])
+    df_shap.sort_values(['shap_mean_abs'], ascending = False, inplace = True)
+    
+    return(df_shap)
+
+def extract_dict_from_str(string):
+
+    x = ast.literal_eval(re.search('({.+})', string).group(0))
+    
+    return(x)
+
+def shap_df_one_record(data):
+    x = extract_dict_from_str(data)
+
+    top = [ ['LoS_student_prediction', float("NaN"), x['outValue']],
+           ['LoS_base_prediction', float("NaN"), x['baseValue']], 
+     ['student_base_diff_val', float("NaN"), x["outValue"] - x['baseValue']]]
+
+    bottom = [
+        ['feature_' + j, x['features'][str(i)]['value'], x['features'][str(i)]['effect']]
+        for i,j in enumerate(x['featureNames'])]
+
+    result = (pd.DataFrame(top + bottom, columns = ['characteristic', 'student_data', 'shap_val_log_odds'])
+     .assign(shap_probability = lambda x: np.exp(x.shap_val_log_odds) / ( 1 + np.exp(x.shap_val_log_odds)))
+     .round(2))
+    
+    return(result)
+
