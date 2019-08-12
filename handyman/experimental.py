@@ -1,3 +1,15 @@
+def training(mdl, X, y, folds, cv = 2, metric = "accuracy"):
+    
+    if cv == 1:
+        mdl.fit(X, y)
+        training = None
+        results = None
+    if cv == 2:
+        training = sk_ms.cross_val_score(mdl, X, y, cv = folds, scoring = metric, n_jobs = -1)
+        results = (training.mean(), training.std()) 
+        
+    return(mdl, training, results)
+
 def substr_overlap(s, n):
     
     result = [s[i:(i+n)] for i in range(len(s) - (n - 1))]
