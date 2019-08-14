@@ -127,6 +127,9 @@ def extract_dict_from_str(string):
     return(x)
 
 def get_shap_exp_vals(mdl, X, y):
+    """
+    fplot = shap.force_plot(explainer.expected_value, shap_vals[45,:], X_train.iloc[45,:], link = 'logit')
+    """
     
     mdl.fit(X.values, y.values)
     explainer = shap.TreeExplainer(test, model_output = "probability")
