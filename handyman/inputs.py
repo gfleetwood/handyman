@@ -1,8 +1,3 @@
-import pandas as pd
-import subprocess as sp
-import pyodbc
-from io import StringIO
-
 def read_csv_sample(fpath, nrows, seed = 8, header = "-r"):
     '''
     @description Sample from a csv on disk

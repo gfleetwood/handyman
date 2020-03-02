@@ -1,6 +1,6 @@
 # Overview
 
-handyman is a hodge-podge of useful Data Science functions. 
+handyman is a hodge-podge of useful Data Science functions. Generate documentation with `pdoc --html handyman`.
 
 ## Installation
 

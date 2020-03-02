@@ -1,5 +1,3 @@
-import sklearn.preprocessing as sk_pp
-
 def impute_scale_data(df):
     '''
     @description Imputes missing values with the median for numeric features and the mode for categorical ones, 

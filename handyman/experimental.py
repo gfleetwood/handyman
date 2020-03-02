@@ -1,3 +1,40 @@
+import sklearn.preprocessing as sk_pp
+from skopt.space import Real, Integer, Categorical
+import json
+import datetime
+import codecs
+import numpy as np
+import pandas as pd
+import plotnine as pn
+import sklearn.metrics as sk_mt
+import statsmodels.formula.api as sm
+import seaborn as sns
+import matplotlib.pyplot as plt
+import statsmodels.formula.api as smf
+import subprocess as sp
+from io import StringIO
+from collections import OrderedDict
+from sklearn.metrics import roc_curve as rc
+from sklearn.preprocessing import Imputer
+from sklearn.preprocessing import StandardScaler
+from statsmodels.graphics.gofplots import ProbPlot
+from mlxtend.frequent_patterns import apriori
+from mlxtend.frequent_patterns import association_rules
+import pyodbc
+import statsmodels.api as sm
+import pandas as pd
+import subprocess as sp
+import pyodbc
+from io import StringIO
+import importlib
+import pickle
+import pandas as pd
+import datetime
+import cProfile, pstats, io
+import json
+import pandas as pd
+from collections import OrderedDict
+
 def training(mdl, X, y, folds, cv = 2, metric = "accuracy"):
     
     if cv == 1:
@@ -170,4 +207,147 @@ def shap_df_one_record(data):
      .round(2))
     
     return(result)
+
+import cProfile, pstats, io
+
+def profile(fnc):
+    
+    """A decorator that uses cProfile to profile a function"""
+    
+    def inner(*args, **kwargs):
+        
+        pr = cProfile.Profile()
+        pr.enable()
+        retval = fnc(*args, **kwargs)
+        pr.disable()
+        s = io.StringIO()
+        sortby = 'cumulative'
+        ps = pstats.Stats(pr, stream=s).sort_stats(sortby)
+        ps.print_stats()
+        print(s.getvalue())
+        return retval
+
+    return inner
+
+def date_decomposition(df):
+
+	result = df.assign(
+	               day = df.ts.dt.day,
+	               month = df.ts.dt.month,
+	               year = df.ts.dt.year)
+	
+	return(result)
+
+ks = ks.assign(hour=ks.launched.dt.hour,
+               day=ks.launched.dt.day,
+               month=ks.launched.dt.month,
+               year=ks.launched.dt.year)
+
+grid_xgb_small = {'learning_rate': [0.005, 0.05, 0.1], 
+        'n_estimators': [10, 100, 250, 500],
+        'num_leaves': [6, 50, 100, 250, 500],
+        'boosting_type': ['gbdt', 'rf'],
+        'colsample_bytree' : [0.65, 1], 
+        'subsample': [0.7, 0.9],
+        'reg_alpha': [0, 1.2], 
+        'reg_lambda': [0, 2]}
+
+ps_knn = {"n_neighbors": range(5, 25, 1), "weights": ["uniform", "distance"]}
+
+hp_xgb_grl = {
+  'learning_rate': np.linspace(0.01, 1.0, 10), 
+  'num_leaves': np.arange(10, 100, 10), 
+  'max_depth': np.arange(0, 50, 10), 
+  'min_child_samples': np.arange(0, 50, 10),
+  'max_bin': np.arange(100, 1000, 100), 
+  'subsample': np.linspace(0.01, 1.0, 10),
+  'subsample_freq': np.arange(0, 10, 1),
+  'colsample_bytree': np.linspace(0.01, 1.0, 10),
+  'min_child_weight': np.arange(0, 10, 1),
+  'subsample_for_bin': np.arange(100000, 500000, 1000),
+  'reg_lambda': np.linspace(1e-9, 1000, 10), 
+  'reg_alpha': np.linspace(1e-9, 1.0, 100), 
+  'scale_pos_weight': np.linspace(1e-9, 500, 10), 
+  'n_estimators':  np.arange(50, 100, 10)}
+    
+hp_rf_gr = {
+'bootstrap': [True, False], 
+'max_features': ['auto', 'sqrt'],
+'max_depth': [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, None],
+'min_samples_leaf': [1, 2, 4], 
+'min_samples_split': [2, 5, 10],
+'n_estimators': [200, 400, 600, 800, 1000, 1200, 1800, 2000]}
+
+hp_lgb_gr = {
+'learning_rate': (0.01, 1.0, 'log-uniform'),
+'num_leaves': (1, 100),      
+'max_depth': (0, 50),
+'min_child_samples': (0, 50),
+'max_bin': (100, 1000),
+'subsample': (0.01, 1.0, 'uniform'),
+'subsample_freq': (0, 10), 
+'colsample_bytree': (0.01, 1.0, 'uniform'),
+'min_child_weight': (0, 10),
+'subsample_for_bin': (100000, 500000),
+'reg_lambda': (1e-9, 1000, 'log-uniform'), 
+'reg_alpha': (1e-9, 1.0, 'log-uniform'),
+'scale_pos_weight': (1e-6, 500, 'log-uniform'),
+'n_estimators': (50, 100)}
+  
+hp_rf_bs = { 
+"max_depth": Integer(3, 10), 
+"n_estimators": Integer(100, 500),  
+"max_features": Categorical(['sqrt','log2']),
+"min_samples_split": Integer(2, 50), 
+"min_samples_leaf": Integer(2, 50), 
+"criterion": Categorical(['entropy'])}
+
+hp_xgb_bs = {
+'learning_rate': Real(0.005, 0.1),
+'n_estimators': Integer(10, 500),
+'num_leaves': Integer(6, 50), 
+'boosting_type': Categorical(['gbdt', 'rf']),
+'colsample_bytree': Real(0.65, 1),
+'subsample': Real(0.7, 0.9),
+'reg_alpha': Real(0, 1.2), 
+'reg_lambda': Real(0, 2)}
+
+hp_xgb_bl = {
+  'learning_rate': Real(0.01, 1.0), 
+  'num_leaves': Integer(10, 100), 
+  'max_depth': Integer(0, 50), 
+  'min_child_samples': Integer(0, 50),
+  'max_bin': Integer(100, 1000), 
+  'subsample': Real(0.01, 1.0, 10),
+  'subsample_freq': Integer(0, 10),
+  'colsample_bytree': Real(0.01, 1.0, 10),
+  'min_child_weight': Integer(0, 10),
+  'subsample_for_bin': Integer(100000, 500000),
+  'reg_lambda': Real(1e-9, 1000, 10), 
+  'reg_alpha': Real(1e-9, 1.0, 100), 
+  'scale_pos_weight': Real(1e-9, 500, 10), 
+  'n_estimators':  Integer(10, 100)}
+
+# Time Series Clustering
+ts_clustering <- function(mat, dist = "dtw", linkage = "average"){
+  mat_dist <- parDist(x = stories_temp, method = dist)
+  stories_clust <- hclust(mat_dist,  method = linkage)
+}
+
+
+
+def adverserial_validation(X1, X2):
+
+    df_av = pd.concat([X2.assign(test = 1), X1.assign(test = 0)], axis = 0)
+    mdl_av = sk_lm.LogisticRegression()
+    training_scores_av = sk_ms.cross_val_score(
+        mdl_av, 
+        df_av.drop(['test'], axis = 1),
+        df_av.test.values, 
+        cv = 5, 
+        scoring = 'roc_auc')
+    
+    results = (training_scores_av.mean(), training_scores.std())
+    
+    return(results)
 

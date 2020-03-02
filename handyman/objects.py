@@ -1,5 +1,3 @@
-from skopt.space import Real, Integer, Categorical
-
 # Sample grids for hyperparameter tuning
 
 grid_kknr = {'leaf_size': [30, 40, 50, 60, 70, 80, 90], 

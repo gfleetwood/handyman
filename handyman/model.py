@@ -1,32 +1,3 @@
-import json
-import datetime
-import codecs
-import numpy as np
-import pandas as pd
-import plotnine as pn
-import sklearn.metrics as sk_mt
-import statsmodels.formula.api as sm
-import seaborn as sns
-import matplotlib.pyplot as plt
-import statsmodels.formula.api as smf
-import subprocess as sp
-from io import StringIO
-from collections import OrderedDict
-from sklearn.metrics import roc_curve as rc
-from sklearn.preprocessing import Imputer
-from sklearn.preprocessing import StandardScaler
-from statsmodels.graphics.gofplots import ProbPlot
-from mlxtend.frequent_patterns import apriori
-from mlxtend.frequent_patterns import association_rules
-import pyodbc
-import statsmodels.api as sm
-
-plt.style.use('seaborn')
-plt.rc('font', size = 14)
-plt.rc('figure', titlesize = 18)
-plt.rc('axes', labelsize = 15)
-plt.rc('axes', titlesize = 18)
-
 def auto_fe(X, tp = ['subtract', 'divide'], ap = ['mean', 'max', 'percent_true', 'last']):
     '''
     @description Automatic feature engineering with Feature Tools. See the Feature Tools docs for more 
