@@ -1,4 +1,6 @@
-# Overview
+# Handyman
+
+## Overview
 
 handyman is a hodge-podge of useful Data Science functions. 
 
@@ -8,7 +10,7 @@ Clone this repo, cd into it, and run: `python install setup.py`.
 
 ## Usage
 
-See the [documentation](https://github.com/gfleetwood/handyman/blob/master/examples.ipynb) for examples.
+See the [documentation](https://gfleetwood.github.io/handyman/) for examples.
 
 ## Building Documentation
 

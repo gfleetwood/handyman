@@ -1,3 +1,11 @@
+def extract_dict_from_str(string):
+    """
+    Extract a dictionary from a string
+    """
+    result = ast.literal_eval(re.search('({.+})', string).group(0))
+
+    return(result)
+
 def get_types_na_count(df):
     '''
     @description Returns columns types and NA counts for them
@@ -8,7 +16,6 @@ def get_types_na_count(df):
     result.columns = ["type", "na_count"]
 
     return(result)
-  
   
 def data_diagnostics(df, num_cols, cat_cols):
     '''
@@ -75,11 +82,3 @@ def flatten_dict(y):
 
     flatten(y)
     return out
-    
-def get_date_time():  
-    '''
-    @description Returns the system date and time as a string.
-    @return The date in ISO-8601 
-    '''
-    return str(datetime.datetime.now()).split(' ')
-
