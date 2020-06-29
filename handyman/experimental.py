@@ -60,3 +60,124 @@ def date_decomposition(df, col):
     )
 
     return(result)
+
+
+def get_shap_df(shap_values, X):
+    
+    df_shap = pd.DataFrame(
+        list(zip(np.mean(shap_values, axis = 0), X.columns)),
+        columns = ['shap_mean', 'feature']
+        )
+    df_shap = df_shap[['feature', 'shap_mean']]
+    df_shap['shap_mean_abs'] = np.absolute(df_shap['shap_mean'])
+    df_shap.sort_values(['shap_mean_abs'], ascending = False, inplace = True)
+
+    return(df_shap)
+
+def shap_breakdown_row_oriented(data):
+    """
+    Gives the SHAP breakdown for a single record with a row for each column name
+    """
+    x = ast.literal_eval(re.search('({.+})', data).group(0))
+
+    top = [ ['LoS_student_prediction', float("NaN"), x['outValue']],
+           ['LoS_base_prediction', float("NaN"), x['baseValue']], 
+     ['student_base_diff_val', float("NaN"), x["outValue"] - x['baseValue']]]
+
+    bottom = [
+        ['feature_' + j, x['features'][str(i)]['value'], x['features'][str(i)]['effect']]
+        for i,j in enumerate(x['featureNames'])]
+
+    result = (
+    pd.DataFrame(top + bottom, columns = ['characteristic', 'student_data', 'shap_val_log_odds'])
+    .assign(shap_probability = lambda x: np.exp(x.shap_val_log_odds) / ( 1 + np.exp(x.shap_val_log_odds)))
+    .round(2)
+    )
+
+    return(result)
+  
+def shap_breakdown_col_oriented(data):
+    """
+    Gives the SHAP breakdown for a single record across the data's columns
+    """
+    x = ast.literal_eval(re.search('({.+})', data).group(0))
+
+    data_dict = {
+      'LoS_student_prediction': [x['outValue']],
+      'LoS_base_prediction': [x['baseValue']],
+      'student_base_diff_val': [x["outValue"] - x['baseValue']]
+      }
+
+    data_dict_features = {
+      j: [x['features'][str(i)]['effect']] # x['features'][str(i)]['value']
+      for i,j in enumerate(x['featureNames'])
+      }
+
+    data_dict.update(data_dict_features)
+    result = pd.DataFrame(data_dict)
+
+    return(result)
+
+# Getting diagonals from a numpy matrix
+
+def get_ldiag(mat, loc):
+    
+    result = np.concatenate((get_ldiag_upper(mat, loc), get_ldiag_lower(mat, loc)))
+    
+    return(result)
+
+def get_ldiag_upper(mat, loc):
+    
+    row, col = loc[0], loc[1]
+    nrow, ncol = mat.shape[0], mat.shape[1]
+    locs = list(zip(range(row - 1, -1, -1), range(col - 1, -1, -1)))
+    
+    result = [mat[pos] for pos in locs][::-1]
+    
+    return(result)
+
+def get_ldiag_lower(mat, loc):
+    
+    row, col = loc[0], loc[1]
+    nrow, ncol = mat.shape[0], mat.shape[1]
+    locs = list(zip(range(row, nrow), range(col, ncol)))
+    
+    result = [mat[pos] for pos in locs]
+    
+    return(result)
+
+def get_nldiag(mat, loc):
+        
+    result = np.concatenate((get_nldiag_upper(mat, loc), get_nldiag_lower(mat, loc)))
+    
+    return(result)
+
+def get_nldiag_upper(mat, loc):
+    
+    row, col = loc[0], loc[1]
+    nrow, ncol = mat.shape[0], mat.shape[1]
+    locs = list(zip(range(row - 1, -1, -1), range(col + 1, ncol)))
+    
+    result = [mat[pos] for pos in locs][::-1]
+    
+    return(result)
+
+def get_nldiag_lower(mat, loc):
+    
+    row, col = loc[0], loc[1]
+    nrow, ncol = mat.shape[0], mat.shape[1]
+    locs = list(zip(range(row, nrow), range(col, -1, -1)))
+    
+    result = [mat[pos] for pos in locs]
+    
+    return(result)
+
+def url_status_code(url):
+    
+    try:
+        result = requests.get(x).status_code != 200
+    except:
+        result = -1
+        
+    
+    return([url, result])
