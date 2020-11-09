@@ -181,3 +181,28 @@ def url_status_code(url):
         
     
     return([url, result])
+
+'''
+g = Github(os.environ.get('GHUB'))
+con_str = "sqlite:////repo_issues.db" 
+eng = create_engine(con_str)
+repo = g.get_repo(os.environ.get('EXAMPLE_REPO'))  
+issues = [x for x in repo.get_issues()]
+
+issues_df = pd.DataFrame([get_issue_data(issue) for issue in issues])
+issues_df.to_sql("TBL", con = eng, index = False, if_exists = "replace")
+'''
+
+def get_issue_data(issue):
+    
+    result =     {
+        "title": issues[0].title, 
+        "body": [issues[0].body],
+        "state": [issues[0].state],
+        "assignees": ["|||".join(issues[0].assignees)],
+        "comments": ["|||".join([x.body for x in issues[0].get_comments()])],
+        'created_at': [issues[0].created_at.isoformat()],
+        "labels": ["|||".join([x.name for x in issues[0].get_labels()])]
+    }
+    
+    return(result)
