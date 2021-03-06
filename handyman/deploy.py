@@ -1,4 +1,5 @@
 def serialize_model(model, descr = ""):
+
     '''
     @description Saves a model's parameters. 
     Source: https://nbviewer.jupyter.org/github/rasbt/python-machine-learning-book/blob/master/code/bonus/scikit-model-to-json.ipynb
@@ -9,6 +10,7 @@ def serialize_model(model, descr = ""):
 
     @return A dataframe containing the model's parameters
     '''    
+
     attrs = [i for i in dir(model) if i.endswith('_') and not i.endswith('__')]   
     attr_dict = {i: getattr(model, i) for i in attrs}  
 
@@ -29,6 +31,7 @@ def serialize_model(model, descr = ""):
     return df
 
 def unserialize_model(df, model_revival, model_index = 0):
+
     '''
     @description Constructs a model from its serialization produced by serialize_model. 
     Source: https://nbviewer.jupyter.org/github/rasbt/python-machine-learning-book/blob/master/code/bonus/scikit-model-to-json.ipynb
@@ -41,6 +44,7 @@ def unserialize_model(df, model_revival, model_index = 0):
 
     @return A dataframe of columns types and NA counts for them
     '''
+
     params = json.loads(df.params[model_index])
     attributes = json.loads(df.attrs[model_index])
     model_revival.set_params(**params)

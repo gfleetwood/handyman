@@ -1,7 +1,9 @@
 def apply_hough_transform(img, min_rad = 500, max_rad = None):
+
     """
-    Get the top resulting cricle from the hough circle transform
+    Get the top resulting circle from the hough circle transform
     """
+
     # Get max rad
     if max_rad is None:
         max_rad = img.shape[0] // 2
@@ -20,11 +22,13 @@ def apply_hough_transform(img, min_rad = 500, max_rad = None):
 
     return top_circle
 
-def circle_crop(img, circle, buffer=0.1):
+def circle_crop(img, circle, buffer = 0.1):
+
     """
     Take input image and tuple that defines (x, y, r) of circle.
     Buffer extends radius around center of circle and removes all outside of that zone.
     """
+
     x, y, r = circle
     # crop image
     buffer = max([buffer, 0]) + 1
@@ -40,12 +44,14 @@ def circle_crop(img, circle, buffer=0.1):
     return img_out, circle
 
 def circle_strip(img, circle, buffer = .1, background = (255, 255, 255), alpha = 0):
+
     """
     Take input image and tuple that defines (x, y, r) of circle.
     If crop, remove all pixels outside of circle with alpha value.
     Buffer defines square around center that will not be cropped.
     If not crop, set all pixels outside of the cirlce to background.
     """
+
     x, y, r = circle
     img_out = []
     if img.shape[2] == 3:
@@ -67,10 +73,12 @@ def circle_strip(img, circle, buffer = .1, background = (255, 255, 255), alpha =
     return img_out
 
 def draw_circle(img, circle, center = True):
+
     """
     Take image and circle, draw green outer perimeter,
     put red dot in center
     """
+
     img_out = img.copy()
     circle = np.uint16(np.around(circle))
     if img.shape[2] == 3:
@@ -92,10 +100,12 @@ def draw_circle(img, circle, center = True):
     return img_out
 
 def prep_image(img_raw):  
+
     """
     Take image and circle, draw green outer perimeter,
     put red dot in center
     """
+
     circle = apply_hough_transform(img_raw)
     img, circle = circle_crop(img_raw, circle)
     img = circle_strip(img, circle)
@@ -104,10 +114,12 @@ def prep_image(img_raw):
 
 
 def crop_petri_dish(file):
+
     """
     Take image and circle, draw green outer perimeter,
     put red dot in center
     """
+
     img_raw = cv2.imread(file, cv2.IMREAD_COLOR)
     img, circle = prep_image(img_raw)
     img_circle = draw_circle(img, circle)

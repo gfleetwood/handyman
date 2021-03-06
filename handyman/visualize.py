@@ -1,5 +1,3 @@
-def placeholder_visualize():
-    """
-    Placeholder
-    """
+def placeholder():
+
     pass

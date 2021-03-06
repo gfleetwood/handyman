@@ -1,0 +1,41 @@
+def get_issue_data(issue):
+    
+    result =     {
+        "title": issues[0].title, 
+        "body": [issues[0].body],
+        "state": [issues[0].state],
+        "assignees": ["|||".join(issues[0].assignees)],
+        "comments": ["|||".join([x.body for x in issues[0].get_comments()])],
+        'created_at': [issues[0].created_at.isoformat()],
+        "labels": ["|||".join([x.name for x in issues[0].get_labels()])]
+    }
+    
+    return(result)
+
+def normalize_repo_labels(repo):
+    
+    repo_labels = [x for x in repo.get_labels()]
+    repo_label_names = [x.name for x in repo_labels]
+    _ = delete_unneeded_labels(repo_labels)
+    _ = create_new_labels(repo, repo_label_names)
+    
+    return(True)
+    
+def delete_unneeded_labels(repo_labels):
+    
+    for x in repo_labels:
+        if x.name not in labels:
+            x.delete()
+    
+    return(True)
+
+def create_new_labels(repo, repo_label_names):
+    
+    for x in labels:
+        if x not in repo_label_names:
+            repo.create_label(x, rand_hex_color().lower())
+        
+    return(True)
+
+rand_color = lambda: random.randint(0,255)
+rand_hex_color = lambda: '%02X%02X%02X' % (rand_color(), rand_color(), rand_color())
