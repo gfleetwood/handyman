@@ -119,3 +119,15 @@ def load_libs(file_path = None, include_defaults = False, verbose = True):
         loaded_libs
         
     return(imported_libs)
+
+def delete_tweets(num_tweets):
+
+    auth = tweepy.OAuthHandler("CLIENT-ID", "CLIENT-SECRET")
+    auth.set_access_token("ACCESS_ID", "ACCESS_SECRET")
+    api = tweepy.API(auth)
+
+    for i in range(num_tweets):
+        for tweet in api.user_timeline(): 
+            tweet.destroy()
+            
+    return(True)

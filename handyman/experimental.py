@@ -177,37 +177,11 @@ def sort_md_by_headings(file, heading):
 
     return(result.strip().replace("\n\n\n", "\n\n"))
 
-def list_all_files_recursive(raw_path):
-
-    abs_path = os.path.abspath(raw_path)
-    files = [path + "/" + file for file in os.listdir(abs_path)]
-
-    return(files)
-
-def list_map():
-
-    result = compose(list, map)
-
-    return(result)
-
-def delete_tweets(num_tweets):
-
-    auth = tweepy.OAuthHandler("CLIENT-ID", "CLIENT-SECRET")
-    auth.set_access_token("ACCESS_ID", "ACCESS_SECRET")
-    api = tweepy.API(auth)
-
-    for i in range(num_tweets):
-        for tweet in api.user_timeline(): 
-            tweet.destroy()
-            
-    return(True)
-
-def get_hackernews_favorites():
+def get_hackernews_favorites(user):
     
     more_favorites = True
     counter = 1
     url_base = "https://news.ycombinator.com/"
-    user = "raizinho"
     url = url_base + "favorites?id={}&p={}"
     data = []
 

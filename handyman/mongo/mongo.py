@@ -5,7 +5,7 @@ db = client["opentrons"]
 # collection.remove
 # collection.drop
 
-for collection in ["run", "slot", "well", "optical_density"]:
+for collection in ["r", "st", "w", "op"]:
     db[collection].remove()
 
 # Mongo
@@ -26,15 +26,15 @@ for collection in ["run", "slot", "well", "optical_density"]:
 for db in client.list_databases():
     print(db)
     
-db = client["opentrons"]
+db = client["op"]
 
 for col in db.list_collection_names(): 
     print(col)
     
-for x in db["optical_density"].find(): 
+for x in db["opt"].find(): 
     print(x.keys())
     
-for x in db["bay"].find(): 
+for x in db["b"].find(): 
     print(x.keys())
 
 pd.DataFrame(list(db["tbl"].find()))

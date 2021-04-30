@@ -35,3 +35,10 @@ def get_file_paths(path):
                 ]
                 
   return(result)
+
+def list_all_files_recursive(raw_path):
+
+    abs_path = os.path.abspath(raw_path)
+    files = [path + "/" + file for file in os.listdir(abs_path)]
+
+    return(files)
