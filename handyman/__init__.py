@@ -96,4 +96,5 @@ from skimage import io
 from skimage.color import rgb2gray
 from pdfrw import PdfWriter
 from fire import Fire
+from itertools import product
 

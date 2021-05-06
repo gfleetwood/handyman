@@ -39,3 +39,27 @@ def create_new_labels(repo, repo_label_names):
 
 rand_color = lambda: random.randint(0,255)
 rand_hex_color = lambda: '%02X%02X%02X' % (rand_color(), rand_color(), rand_color())
+
+'''
+# Examples
+
+# Set repo labels
+
+labels = ["feature", "enhancement", "bug", "backlog", "documentation"]
+
+g = Github(os.environ.get("GHUB"))
+g_usr = g.get_user()
+repos = list(g_usr.get_repos())
+vader_repos = [x for x in repos if "vader" in x.full_name]
+_ = [normalize_repo_labels(repo) for repo in vader_repos]
+
+# Save issues to db
+
+g = Github(os.environ.get('GHUB'))
+con_str = "sqlite:////repo_issues.db" 
+eng = create_engine(con_str)
+repo = g.get_repo(os.environ.get('EXAMPLE_REPO'))
+issues = [x for x in repo.get_issues()]
+issues_df = pd.DataFrame([get_issue_data(issue) for issue in issues])
+issues_df.to_sql("TBL", con = eng, index = False, if_exists = "replace")
+'''
