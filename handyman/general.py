@@ -134,39 +134,9 @@ def delete_tweets(num_tweets):
 
 functional_double_for_loop = lambda x,y: list(product(range(x), range(y)))
 
-'''
-# Examples
+def read_function_def(func):
 
-## DB To Nx
+  from inspect import getsource
+  func_source = get_source(func)
 
-df = pd.read_sql("SELECT * FROM experimental_conditions", con = eng)
-edges = []
-G = nx.DiGraph()
-
-for row in df.iterrows():
-    
-    G.add_node(
-    row[1]["database_num"], 
-    experiment_num = row[1]["experiment_num"],
-    bay_num = row[1]["bay_num"],
-    strain = row[1]["strain"],
-    function = row[1]["function"],
-    media = row[1]["media"],
-    carbon_source = row[1]["carbon_source"],
-    cells_added = row[1]["cells_added"],
-    cells_source = row[1]["cells_source"]
-    )
-    
-    node_edges = [
-        [row[1]["database_num"],j]
-        for j in row[1]["edges_out"].split("-") 
-        if len(j) != 0
-    ]
-    
-    edges.append(node_edges)
-
-edges_flattened = sum(edges, [])
-
-for edge in edges_flattened:
-    G.add_edge(edge[0], edge[1])
-'''
+  return(func_source)
