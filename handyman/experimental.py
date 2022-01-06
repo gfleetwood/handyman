@@ -1,4 +1,6 @@
 import pandas as pd
+from sqlalchemy import create_engine
+import pandas as pd
 
 def get_exp_shap_vals(mdl, X, y):
 
@@ -371,9 +373,6 @@ def create_issue_from_starred_repo_df(df, repo):
     
     return(1)
 
-from sqlalchemy import create_engine
-import pandas as pd
-
 def get_comment_formats(row):
     
     payload = [tbl_description, column_description]
@@ -396,8 +395,8 @@ def tbl_description(row):
 def column_description(row):
     
     postgres_column_comment_template = '''
-   COMMENT ON COLUMN {table}.{column} IS 'ENTER DESCRIPTION HERE'
-   '''
+    COMMENT ON COLUMN {table}.{column} IS 'ENTER DESCRIPTION HERE'
+    '''
     
     payload = postgres_column_comment_template.format(
         table = row.table_name, 
@@ -406,24 +405,28 @@ def column_description(row):
     
     return(payload)
 
-eng = create_engine("")
+def rename_multi_index_cols(columns):
 
-df = pd.read_sql(
-    '''
-    select table_schema, table_name, column_name, ordinal_position
-    FROM information_schema.columns r
-    WHERE table_schema = 'public'
-    ''', 
-    con = eng
-)
+   "Assumes reset_index has been run on the multi-index dataframe"
     
-payload = "".join(sorted(list(set(sum(list(map(get_comment_formats, list(df.itertuples()))), []))), reverse = True))
+    payload = [
+    '_'.join(col).strip() 
+    if len(' '.join(col).strip() .split(" ")) > 1
+    else ''.join(col).strip()
+    for col in df.columns.values
+    ]
+    
+    return(payload)
 
-with open("schema_docs_generated.sql", "w") as f:
-    f.write(payload)
+def possibly(f, default):
+
+  def wrapper(a, b):
     
-(
-    df
-    .assign(sql_table_doc = lambda x: [te(row) for row in x.itertuples()])
-    .assign(sql_column_doc = lambda x: [te2(row) for row in x.itertuples()])
-).head()
+    try:
+      payload = f(a, b)
+    except:
+      payload = default
+    
+    return(payload)
+
+  return(wrapper)

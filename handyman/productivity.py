@@ -1,31 +1,5 @@
 from os import system
 
-def compress_pdf(input_path, output_path):
-
-  template = "gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook -dNOPAUSE -dBATCH  -dQUIET -sOutputFile={} {}"
-  system(template.format(output_path, input_path))
-
-  return(1)
-
-def password_generator():
-
-  template = 'echo $(grep "^[^\']\{3,5\}$" /usr/share/dict/words|shuf -n 4)'
-  system(template)
-
-  return(1)
-
-def gpg_encrypt(file_path): 
-
-  system("gpg -c {}".format(file_path))
-
-  return(1)
-
-def gpg_decrypt(file_path): 
-
-  system("gpg -d {}".format(file_path))
-
-  return(1)
-
 def delete_tweets(num_tweets):
 
     auth = tweepy.OAuthHandler("CLIENT-ID", "CLIENT-SECRET")
@@ -37,15 +11,6 @@ def delete_tweets(num_tweets):
             tweet.destroy()
             
     return(True)
-
-def extract_audio_from_video(video_path):
-
-  import os
-  template = "ffmpeg -i {} -q:a 0 -map a output.mp3"
-  cmd = template.format(video_path)
-  os.system(cmd)
-
-  return(True)
 
 def md_tbl_to_csv(md_tbl: str) -> pd.DataFrame:
     
