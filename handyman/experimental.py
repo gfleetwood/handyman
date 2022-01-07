@@ -417,16 +417,3 @@ def rename_multi_index_cols(columns):
     ]
     
     return(payload)
-
-def possibly(f, default):
-
-  def wrapper(a, b):
-    
-    try:
-      payload = f(a, b)
-    except:
-      payload = default
-    
-    return(payload)
-
-  return(wrapper)

@@ -98,15 +98,7 @@ def load_libs(file_path = None, include_defaults = False, verbose = True):
         
     return(imported_libs)
 
-def read_function_def(func):
-
-  from inspect import getsource
-  func_source = get_source(func)
-
-  return(func_source)
-
 def read_postgres_con_str_components(con_str):
-
   '''
   con_str_format = "postgres://USERNAME_PASSWORD@HOST:PORT/DATABASE"
   '''
@@ -159,3 +151,17 @@ def read_ips_on_network():
   nmap_scan_df = DataFrame(nmap_scan_ips_named, columns = ["device_name", "ip_address"])
   
   return(nmap_scan_df)
+
+def possibly(f, default = "Error"):
+
+  def wrapper(a, b):
+    
+    try:
+      payload = f(a, b)
+    except Except as e:
+      print(e)
+      payload = default
+    
+    return(payload)
+
+  return(wrapper)
