@@ -158,7 +158,7 @@ def possibly(f, default = "Error"):
     
     try:
       payload = f(a, b)
-    except Except as e:
+    except Exception as e:
       print(e)
       payload = default
     

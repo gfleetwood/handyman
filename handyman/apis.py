@@ -1,4 +1,4 @@
-import os
+from os import environ
 
 def aws():
 
@@ -53,14 +53,14 @@ def get_dbx_con():
 
 def get_dbx_files(folder: str):
 
-    #_ = dbx.files_list_folder()
-    files = [
+    files = dbx.files_list_folder("folder")
+    results = [
        dbx.files_download(entry.path_lower)
-       for entry in folder.entries
+       for entry in files.entries
        if (isinstance(entry, dropbox.files.FileMetadata))
     ]
 
-    return(files)
+    return(results)
 
 def update_dbx_rename_or_move_file(old_file_path: str, new_file_path: str) -> bool:
 
