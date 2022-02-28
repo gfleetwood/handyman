@@ -12,7 +12,6 @@ import dropbox
 import tweepy
 import boto3
 import asana
-
 import subprocess
 import importlib
 import requests as r
@@ -68,14 +67,11 @@ from math import atan2, pi, sqrt
 import matplotlib.image as mpimg
 import requests
 import sqlite3
-from pymongo import MongoClient
 import pandas as pd
 from skimage.color import rgb2gray
 from github import Github
 from sqlalchemy import create_engine
 from skimage import io
 from skimage.color import rgb2gray
-from pdfrw import PdfWriter
-from fire import Fire
 from itertools import product
 

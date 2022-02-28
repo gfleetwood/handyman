@@ -2,6 +2,15 @@ from subprocess import run
 from re import search
 from pandas import DataFrame
 from sqlalchemy import create_engine
+import os
+
+def euclidean_distance(p1, p2):
+
+  temp = np.array(p1) - np.array(p2) 
+  sum_sq = np.dot(temp.T, temp)
+  result = np.sqrt(sum_sq)
+
+  return(result)
 
 def extract_dict_from_str(string):
     """
@@ -28,7 +37,6 @@ def data_diagnostics(df, num_cols, cat_cols):
     @param cat_cols A list of categorical columns
     @return A dataframe of columns types and NA counts for them
     '''
-
     # Numerical summary
     df_num = df[num_cols]
     num_summary = df_num.describe().T
@@ -103,7 +111,6 @@ def read_postgres_con_str_components(con_str):
   '''
   con_str_format = "postgres://USERNAME_PASSWORD@HOST:PORT/DATABASE"
   '''
-
   con_str_wo_db = con_str.replace("postgres://", "")
 
   un = con_str_wo_db.split(":")[0]
@@ -343,8 +350,6 @@ def get_hackernews_favorites(user):
     return(data_df)
 
 def print_repos_info(base_dir, repos):
- 
-  import os
 
   repos_full_paths = [os.path.join(base_dir, r) for r in repos]
   _ = [print_repo_info(x) for x in repos_full_paths]
@@ -417,7 +422,6 @@ def db_to_nx_digraph(df, source_node_col, target_nodes_col):
     
     df_graph: A pandas dataframe with the source node, targets nodes, and any node metadata.
     """
-    
     G = nx.DiGraph()
     edges_nested = []
     
@@ -448,7 +452,6 @@ def db_to_nx_digraph(df, source_node_col, target_nodes_col):
     return(G)
     
 def nx_digraph_to_df(G, columns_df, source_node_col, target_nodes_col):
-    
     """
     Converts a networkx digraph to a dataframe preserving node attributes. 
     
@@ -463,7 +466,6 @@ def nx_digraph_to_df(G, columns_df, source_node_col, target_nodes_col):
     
     df_graph: A pandas dataframe with the source node, targets nodes, and any node metadata.
     """
-    
     nodes = list(G.nodes)
     edges = list(G.edges)
 
@@ -514,7 +516,6 @@ def create_issue_from_starred_repo_df(df, repo):
     Takes in a dataframe of a starred repos data and makes it a issue
     for the repo
     """
-    
     issue_title = "{} ({})".format(df['name'], df['repo_id'])
     issue_body = "{}\n\n{}".format(df['url'], df['description'])
     issue_tags = [tag for tag in df['tags_lang'].split(",")]

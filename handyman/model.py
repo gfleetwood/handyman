@@ -1,12 +1,10 @@
 def ols_with_diagnostics(df, formula = 'sepal_length ~ sepal_width'):
-
     '''
     @description OLS with diagnostics. Source: https://medium.com/@emredjan/emulating-r-regression-plots-in-python-43741952c034
     @param df A dataframe
     @param formula The regression to perform as a formula, eg. sepal_length ~ sepal_width
     @return A confirmation message
     '''        
-
     model_fit = sm.ols(formula, data = df).fit()
 
     # fitted values (need a constant term for intercept)
@@ -175,27 +173,18 @@ def mdl_cv(model, X, y, cv = 5):
 
 def lm_stats(X, y):
 
-    '''
-    @description A wrapper to create an OLS model with statsmodels
-    @param X The feature dataframe
-    @param y The target
-    @return A trained OLS model
-    '''
-
     X = sm.add_constant(X)
     mdl = sm.OLS(y, X).fit()
 
     return(mdl)
     
 def cutoff_youdens_j(y, y_hat_probs):
-
     '''
     @description Implements the Youden's J cutoff for the optimal classification threshold
     @param y The target
     @param y_hat_probs The generated model probabilities for the target
     @return A threshold to be used as a cutoff in binary classification
     '''    
-
     fpr, tpr, thresholds = rc(y, y_hat_probs, pos_label = 1)
     j_scores = tpr - fpr
     j_ordered = sorted(zip(j_scores,thresholds))
@@ -204,13 +193,11 @@ def cutoff_youdens_j(y, y_hat_probs):
     return(youden_j)
 
 def kaiser_harris_criterion(df):
-
     '''
     @description An implementation of the Kaiser-Harris Criterion
     @param df A dataframe
     @return The recommendation for how many Principal Components to use in PCA
     '''    
-
     cov_mat = np.cov(df.T)
     e_vals, _ = np.linalg.eig(cov_mat)
     dim_rec = len(e_vals[e_vals > 1])

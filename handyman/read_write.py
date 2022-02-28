@@ -1,11 +1,4 @@
 def get_file_paths(path):
-    '''
-    @description Sample from a csv on disk
-    @param fpath The path to the file
-    @param nrows The number of rows to sample
-    @return An sample of the file
-    '''   
-  
     result =  [
     os.path.join(dp, f) 
     for dp, dn, filenames in os.walk(path) 
