@@ -1,3 +1,6 @@
+from os import environ
+from github import Github
+
 def github():
 
   '''
@@ -65,3 +68,16 @@ def create_new_labels(repo, repo_label_names):
             repo.create_label(x, rand_hex_color().lower())
         
     return(True)
+
+def create_repo_labels():
+  labels = ["backlog", "bug", "documentation", "enhancement", "feature"]
+  g = Github(environ["GHUB"])
+  user_info = g.get_user()
+  a = user_info.get_repos()[0] 
+  #for label in a.get_labels(): label.delete()
+  #for label in labels: a.create_label(label, color = "0000FF")
+  
+  return(True)
+  
+  
+

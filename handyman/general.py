@@ -107,28 +107,6 @@ def load_libs(file_path = None, include_defaults = False, verbose = True):
         
     return(imported_libs)
 
-def read_postgres_con_str_components(con_str):
-  '''
-  con_str_format = "postgres://USERNAME_PASSWORD@HOST:PORT/DATABASE"
-  '''
-  con_str_wo_db = con_str.replace("postgres://", "")
-
-  un = con_str_wo_db.split(":")[0]
-  con_str_no_un = con_str_wo_db.replace(un + ":", "")
-
-  pw = con_str_no_un.split("@")[0]
-  con_str_no_pw = con_str_no_un.replace(pw + "@", "")
-
-  host = con_str_no_pw.split(":")[0]
-  con_str_no_host = con_str_no_pw.replace(host + ":", "")
-
-  port = con_str_no_host.split("/")[0]
-  db_name = con_str_no_host.replace(port + "/", "")
-
-  payload = {"username": un, "password": pw, "host": host, "port": port, "database_name": db_name}
-
-  return(payload)
-
 def read_ips_on_network():
 
   ip_call = run(["ip", "addr", "show"], capture_output = True)
@@ -395,15 +373,11 @@ def trash_mp3(file_path):
     
     return(True)
 
-def not_yet_defined(path):
-    
-    return("Function not yet defined for this file type")
-
 def rewrite_file(path):
 
     file_type = path.split(".")[-1]
     trash_file = {"pdf": trash_pdf, "mp3": trash_mp3, "jpg": trash_img}
-    result = trash_file.get(file_type, not_yet_defined)(path)
+    result = trash_file.get(file_type)(path)
 
     return(result)
 
@@ -538,38 +512,6 @@ def create_issue_from_starred_repo_df(df, repo):
     time.sleep(3)
     
     return(1)
-
-def get_comment_formats(row):
-    
-    payload = [tbl_description, column_description]
-    
-    return(payload)
-
-def tbl_description(row):
-    
-    postgres_tbl_comment_template = '''
-    COMMENT ON TABLE {schema}.{table} IS 'ENTER DESCRIPTION HERE'
-    '''
-    
-    payload = postgres_tbl_comment_template.format(
-        schema = row.table_schema, 
-        table = row.table_name
-    ).replace("\n", "", 1)
-    
-    return(payload)
-
-def column_description(row):
-    
-    postgres_column_comment_template = '''
-    COMMENT ON COLUMN {table}.{column} IS 'ENTER DESCRIPTION HERE'
-    '''
-    
-    payload = postgres_column_comment_template.format(
-        table = row.table_name, 
-        column = row.column_name
-    ).replace("\n", "", 1)
-    
-    return(payload)
 
 def rename_multi_index_cols(columns):
 
