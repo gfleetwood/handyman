@@ -525,3 +525,9 @@ def rename_multi_index_cols(columns):
     ]
     
     return(payload)
+    
+def take_picture_web_cam(full_filename):
+ 
+    os.system("fswebcam --crop 600x400,350x130 -r 1280x720 --no-banner {}".format(full_filename))
+
+    return(True)
