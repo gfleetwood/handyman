@@ -2,6 +2,9 @@ def take_video(exp, file_name):
 
   # take_video <hh> <mm> <ss> <output_file_name>
   sys_call = "ffmpeg -y -video_size 640x480 -i /dev/video0 -t 00:00:05 /var/lib/jupyter/notebooks/vid.mp4"
+  #sys_call = "!/bin/sh ffmpeg \
+  #-y -video_size 640x480 \
+  #-i /dev/video0 -t 00:00:05 /var/lib/jupyter/notebooks/vid$1.mp4"
   os.system(sys_call)
 
   return(True)
