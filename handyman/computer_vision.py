@@ -5,6 +5,22 @@ from skimage.filters import threshold_otsu
 import skimage.exposure
 from scipy.signal import find_peaks
 
+def morphology(im):
+
+  # despeckling: Morphology with a erosion and dilation usually solves the problem.
+
+  from skimage import morphology
+
+  eroded_image_shape = morphology.binary_erosion(upper_r_image) 
+  dilated_image = morphology.binary_dilation(world_image)
+  
+  return(dilated_image)
+  
+def mask_image(im):
+
+  return(im*(im > .8)*(im > .9)*(im > .95))
+ 
+
 def get_circle(im, x, y, r):
   '''
   https://stackoverflow.com/questions/31519197/python-opencv-how-to-crop-circle/43835120#43835120
