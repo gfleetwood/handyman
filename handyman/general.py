@@ -5,6 +5,20 @@ from sqlalchemy import create_engine
 import os
 from os import system
 
+def srt_to_df(srt_raw):
+  
+  srt = [x for x in srt_raw.split("\n\n") if x!= ""]
+  srt_triples = [x.split("\n") for x in srt]
+  
+  srt_triples_dicts = [
+    {"Index": x[0], "Start Time": x[1].split(" --> ")[0], "End Time": x[1].split(" --> ")[1], "Transcript": x[2]} 
+    for x in srt_triples
+    ] 
+  
+  payload = pd.DataFrame(srt_triples_dicts)
+  
+  return(payload)
+
 def delete_tweets(num_tweets):
 
     auth = tweepy.OAuthHandler("CLIENT-ID", "CLIENT-SECRET")
